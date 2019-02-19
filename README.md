@@ -1,0 +1,2 @@
+# gocms
+Simple Go CMS

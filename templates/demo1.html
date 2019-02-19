@@ -1,0 +1,42 @@
+{{template "base" .}}
+
+{{define "title"}}
+  TEST | {{.current.Title}}
+{{end}}
+
+{{define "body"}}
+    <body>
+        <div class="container">
+            <div class="row">
+                <div class="col-md-4">
+                    Name : {{.current.Title}}<br>
+                    <br>
+                    <ul>
+                        {{range .pages.Children}}
+                                <li>{{.Title}}</li>
+                                {{range .Children}}
+                                    <li> - {{.Title}}</li>
+                                {{end}}
+
+                        {{end}}
+                    </ul>
+
+                    <br><br>
+
+                  <div id="app">
+                    ${ message }
+                  </div>
+                </div>
+            </div>
+        </div>
+        <script>
+        var app = new Vue({
+          delimiters: ['${', '}'],
+          el: '#app',
+          data: {
+            message: 'You loaded this page on ' + new Date().toLocaleString()
+          }
+        })
+        </script>
+    </body>
+{{end}}

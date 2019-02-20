@@ -7,13 +7,54 @@ import (
     "time"
 )
 
+type Content struct {
+	// Content
+	Title      string
+	Teaser     string
+	Content    string
+	LinkUrl    string
+	LinkText   string
+	LinkTarget string
+	ImageUrl   string
+	ImageText  string
+	// Meta
+	Index      int     // position if part of list
+	Position   string  // position in template
+	Class      string  // a class designator
+	Visible    bool
+}
+
 type Page struct {
+	// Content
 	Title    string
 	Name     string
-	Slug     string
 	Content  string
+	// Meta
+	Slug     string
+	Template string // template file to use
+	Class    string
+	Index    int    // position in respect to other pages
+	Visible  bool   // visible in menu
 	Parent   *Page
 	Children *[]Page
+}
+
+
+
+func join(strs ...string) string {
+	var sb strings.Builder
+	for _, str := range strs {
+		sb.WriteString(str)
+	}
+	return sb.String()
+}
+
+func joinRunes(runes ...rune) string {
+	var sb strings.Builder
+	for _, r := range runes {
+		sb.WriteRune(r)
+	}
+	return sb.String()
 }
 
 
@@ -25,6 +66,14 @@ func randString(n int) string {
         b[i] = letters[rand.Intn(len(letters))]
     }
     return string(b)
+}
+
+func randSentence(n int) string {
+	b := make([]string, n)
+    for i := range b {
+        b[i] = randString(6)
+    }
+    return strings.Join(b," ")
 }
 
 func (p Page) Print(index int, level int) {
@@ -59,16 +108,6 @@ func (p Page) AbsSlug() string {
 	return slug
 }
 
-func ExampleSite () Page {
-    p := Page{Title: "Frontpage",
-			  Name: "Frontpage",
-			  Slug: "/",
-			  Children: &[]Page{
-			{Title: "Products", Children: &[]Page{{Title: "Prod1", Children: &[]Page{}},
-				{Title: "Prod2", Children: &[]Page{}}}},
-			{Title: "About us", Children: &[]Page{}}}}
-    return p
-}
 
 func TestRnd() {
     var m map[int]int
@@ -83,6 +122,16 @@ func TestRnd() {
     }
 }
 
+func RandomContent() Content {
+	t:=strings.Title(randString(rand.Intn(5)+2))
+	c:=Content{Title: t,
+	           Teaser: randSentence(30),
+			   Content: randSentence(150),
+			   Visible: true}
+	return c
+}
+
+
 func RandomPages (max_pages int, parent *Page) *[]Page {
     //ap := make([]Page,0)
     var ap []Page
@@ -93,7 +142,9 @@ func RandomPages (max_pages int, parent *Page) *[]Page {
 	        p:= Page{Title: t,
 	                 Name: t,
 					 Slug: strings.ToLower(t),
-					 Content: randString(80),
+					 Visible: true,
+					 Template: "standard_page.html",
+					 Content: randSentence(150),
 					 Parent: parent} // &[]Page{}}
 			p.Children = RandomPages(max_pages-2,&p)
 	        ap=append(ap,p)
@@ -107,7 +158,8 @@ func RandomSite () Page {
     p := Page{Title: "Frontpage",
 			  Name: "Frontpage",
 			  Slug: "",
-			  Content: "Blah blak...",
+			  Template: "standard_page.html",
+			  Content: randSentence(50),
 			  Parent: nil}
 	p.Children = RandomPages(10,&p)
     return p

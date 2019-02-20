@@ -1,4 +1,4 @@
-package main
+package gserver
 
 import (
 	//    "database/sql"
@@ -54,12 +54,13 @@ func (t *TemplateRenderer) Render(w io.Writer, name string, data interface{}, c 
 
 
 
-func run() {
+func Run() {
 
 	//	db := initDB("storage.db")
 	//	migrate(db)
 
 	e := echo.New()
+	//e.Debug=true
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
 
@@ -68,45 +69,40 @@ func run() {
 	}
 	e.Renderer = renderer
 
-    if debug {
-        fmt.Printf("Loaded templates:\n")
+	/*
+    if debug { // Print templates
         for _, t := range renderer.templates.Templates() {
             fmt.Printf("%+v\n", t.Name())
         }
     }
+	*/
 
 	root_page := gdb.RandomSite()
 
+	// Attach all pages to Echos router
+	fmt.Println("Attaching page routes")
 	root_page.Apply(func(p gdb.Page) {
-		println(p.Name, p.Slug, p.AbsSlug())
+		fmt.Printf("%30s %10s %30s\n", p.Name, p.Slug, p.AbsSlug())
 		e.GET(p.AbsSlug(), func(c echo.Context) error {
-			//	return c.String(http.StatusOK, p.AbsSlug())
-			c.Render(http.StatusOK, "demo1.html", map[string]interface{}{"pages":root_page, "current": p})
+			c.Render(http.StatusOK, "standard_page.html", map[string]interface{}{"pages":root_page, "current": p})
 			return nil
 		})
 	})
 
-
-	// Named route "foobar"
+	/*
 	e.GET("/something", func(c echo.Context) error {
-		c.Render(http.StatusOK, "demo1.html", map[string]interface{}{
+		c.Render(http.StatusOK, "standard_page.html", map[string]interface{}{
 			"pages":root_page})
         return nil
 	}).Name = "foobar"
-
-
-	e.GET("/", func(c echo.Context) error {
-		return c.String(http.StatusOK, "Hello, World!")
-	})
 
 	e.GET("/z*", func(c echo.Context) error {
 		fmt.Printf("%+v\n", c)
 		return c.String(http.StatusOK, "/users/1/files/*")
 	})
-
-	e.File("/d/", "templates/demo1.html")
-	e.File("/favicon.ico", "assets/favicon.ico")
-	e.Static("/", "assets")
+	*/
+	e.File("/favicon.ico", "assets/img/favicon.ico")
+	e.Static("/assets", "assets")
 	//	e.File("/", "public/index.html")
 	//	e.GET("/tasks", handlers.GetTasks(db))
 	//	e.PUT("/tasks", handlers.PutTask(db))
@@ -115,7 +111,7 @@ func run() {
 	e.Logger.Fatal(e.Start(":8000"))
 }
 
-func test() {
+func Test() {
     //run()
     //gdb.TestRnd()
     root_page := gdb.RandomSite()
@@ -124,7 +120,7 @@ func test() {
 }
 
 func main() {
-    run()
+    Run()
     //for i := 0; i < 10; i++ {
     //    test()
     //}

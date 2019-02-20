@@ -13,10 +13,27 @@
                     <br>
                     <ul>
                         {{range .pages.Children}}
-                                <li>{{.Title}}</li>
+                            <li><a href="{{.AbsSlug}}">{{.Title}}</a></li>
+                            {{if .Children}}
+                                <ul>
                                 {{range .Children}}
-                                    <li> - {{.Title}}</li>
+                                    <li> - <a href="{{.AbsSlug}}">{{.Title}}</a></li>
+
+                                    {{if .Children}}
+                                        <ul>
+                                        {{range .Children}}
+                                            <li> - <a href="{{.AbsSlug}}">{{.Title}}</a></li>
+
+
+
+                                        {{end}}
+                                        </ul>
+                                    {{end}}
+
+
                                 {{end}}
+                                </ul>
+                            {{end}}
 
                         {{end}}
                     </ul>

@@ -1,6 +1,6 @@
 
 
-/* ---- [ dependencies/vue/vue.js ]----- */
+/* ---- [ vue/vue.js ]----- */
 
 /*!
  * Vue.js v2.6.6

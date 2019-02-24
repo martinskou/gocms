@@ -1,0 +1,3 @@
+#export GOPATH=$(pwd)
+echo "$GOPATH"
+go get -u github.com/labstack/echo/...

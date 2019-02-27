@@ -1,0 +1,107 @@
+
+/* source-sans-pro-regular - latin */
+@font-face {
+  font-family: 'Source Sans Pro';
+  font-style: normal;
+  font-weight: 400;
+  src: local('Source Sans Pro Regular'), local('SourceSansPro-Regular'),
+       url('/cms_assets/fonts/source-sans-pro-v11-latin-regular.woff2') format('woff2'), /* Chrome 26+, Opera 23+, Firefox 39+ */
+       url('/cms_assets/fonts/source-sans-pro-v11-latin-regular.woff') format('woff'); /* Chrome 6+, Firefox 3.6+, IE 9+, Safari 5.1+ */
+}
+
+/* source-sans-pro-600 - latin
+@font-face {
+  font-family: 'Source Sans Pro';
+  font-style: normal;
+  font-weight: 600;
+  src: local('Source Sans Pro SemiBold'), local('SourceSansPro-SemiBold'),
+       url('/assets/fonts/source-sans-pro-v11-latin-600.woff2') format('woff2'),
+       url('/assets/fonts/source-sans-pro-v11-latin-600.woff') format('woff');
+}
+*/
+
+* {
+ font-size: 100%;
+ font-family: 'Source Sans Pro';
+}
+
+.hello {
+  color: red;
+}
+
+.is-fullheight {
+	min-height:1200px;
+}
+
+input:focus,
+select:focus,
+textarea:focus,
+button:focus {
+    outline: none;
+}
+
+.input {
+	box-shadow: none;
+}
+.input:active {
+	box-shadow: none;
+	border-color:#000;
+}
+.input:focus {
+	box-shadow: none;
+	border-color:#000;
+}
+
+button.is-orange {
+	background-color:#fff;
+	color:#d70;
+	border-color:#d70;
+}
+button.is-boring {
+	background-color:#fff;
+	color:#aaa;
+	border-color:#aaa;
+}
+
+.button[disabled], fieldset[disabled] .button {
+	color:#777;
+}
+
+/* Top navbar modification */
+
+div#navigation {
+	background-color:#f0f0f0;	
+}
+.navbar {
+	background-color:#404040;	
+}
+a.navbar-item {
+	color:#fff;
+}
+a.navbar-link {
+	color:#fff;
+}
+a.navbar-item:hover, a.navbar-item.is-active, .navbar-link:hover, .navbar-link.is-active {
+    background-color: #707070;
+    color: #a0a0a0;
+}
+.navbar-item.has-dropdown:hover .navbar-link, .navbar-item.has-dropdown.is-active .navbar-link {
+    background-color: #707070;
+    color: #a0a0a0;
+}
+.navbar-link:not(.is-arrowless)::after {
+	border-color:#a0a0a0;
+}
+.navbar-dropdown a.navbar-item {
+	color:#000;
+}
+
+
+
+div#pageselector {
+}
+
+div.is-sidebar-menu {
+	border-right:1px solid #a0a0a0;
+	background-color:#f0f0f0;	
+}

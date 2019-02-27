@@ -6,6 +6,8 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
+	"errors"
+	"github.com/fsnotify/fsnotify"
 	"path/filepath"
 	"encoding/json"
 )
@@ -64,6 +66,24 @@ type Build struct {
 		Destination  string
 }
 
+func LoadBuild(path string) ([]Build, error) {
+	var builds []Build
+	bundle_file:=filepath.Join(path,"build.json")
+	if Exists(bundle_file) {
+		dat, _ := ioutil.ReadFile(bundle_file)
+		err := json.Unmarshal(dat  , &builds)
+		if err != nil {
+			fmt.Println("error:", err)
+			return builds, errors.New("Error reading json file")
+		} else {
+			return builds, nil
+		}
+	} else {
+		return builds, errors.New("Error, missing json file")
+	}
+
+}
+
 func Bundle(path string) {
 	fmt.Println(path)
 	bundle_file:=filepath.Join(path,"build.json")
@@ -84,4 +104,59 @@ func Bundle(path string) {
 	}
 	
 	
+}
+
+func NewWatcher(files []string, path string) {
+	watcher, err := fsnotify.NewWatcher()
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer watcher.Close()
+
+	done := make(chan bool)
+	go func() {
+		for {
+			select {
+			case event, ok := <-watcher.Events:
+				if !ok {
+					return
+				}
+				//log.Println("event:", event)
+				if event.Op&fsnotify.Write == fsnotify.Write {
+					log.Println("modified file:", event.Name)
+					Bundle(path)
+				}
+			case err, ok := <-watcher.Errors:
+				if !ok {
+					return
+				}
+				log.Println("error:", err)
+			}
+		}
+	}()
+
+	for _,f := range files {
+		err = watcher.Add(f)
+		if err != nil {
+			log.Fatal(err)
+		}}
+	<-done
+}
+
+func Watch(path string) {
+	builds,err:=LoadBuild(path)
+	Bundle(path)
+	if err != nil {
+		fmt.Println("error:", err)
+	} else {
+		var files []string
+		for _,b := range builds {
+//			fmt.Printf("%+v\n", b.Files)
+			for _,f := range b.Files {
+				files=append(files,filepath.Join(path,f))
+			}
+		}
+		fmt.Printf("%+v\n", files)
+		NewWatcher(files,path)
+	}
 }

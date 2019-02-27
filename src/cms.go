@@ -35,12 +35,33 @@ func main() {
 				}
 				return nil
 			}},
+		{Name: "watch",
+			Aliases: []string{"w"},
+			Usage:   "watch for changes and bundle dependencies (js and css)",
+			Action: func(c *cli.Context) error {
+				bundle_path := c.Args().First()
+				if bundle_path=="" {
+					fmt.Println("You must specify a path containing a build.json file")
+				} else {
+					work_path, _ := os.Getwd()
+					Watch(filepath.Join(work_path, bundle_path))
+				}
+				return nil
+			}},		
 		{
-			Name:    "run",
+			Name:    "startserver",
 			Aliases: []string{"r"},
 			Usage:   "start gocms server",
 			Action: func(c *cli.Context) error {
-				RunServer()
+				config_path := c.Args().First()
+				if config_path=="" {
+					fmt.Println("You must specify a config.json file")
+				} else {
+					work_path, _ := os.Getwd()
+					abs_config_path := filepath.Join(work_path,config_path)
+					base_path := filepath.Dir(filepath.Dir(abs_config_path))
+					RunServer(base_path,config_path)
+				}
 				return nil
 			}},
 		{

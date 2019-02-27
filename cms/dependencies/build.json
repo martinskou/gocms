@@ -1,0 +1,10 @@
+[
+	{"task:":"bundle",
+	 "type":"js",
+	 "files":["vue/vue.js","gocms/gocms.js"],
+	 "destination": "../assets/bundle.js"},
+	{"task:":"bundle",
+	 "type":"css",
+	 "files":["bulma/css/bulma.css", "gocms/gocms.css"],
+	 "destination": "../assets/bundle.css"}
+]

@@ -5,12 +5,22 @@ import (
     "strings"
     "math/rand"
     "time"
+	"errors"
+	"io/ioutil"
+	"encoding/json"
 )
 
+
+type Reply struct {
+	Status     string
+	Data       interface{} // almost everything
+}
 
 type Config struct {
 	Title      string
 	Theme      string
+	Port       string
+	Debug      bool
 }
 
 type Content struct {
@@ -36,6 +46,7 @@ type Page struct {
 	Name     string
 	Content  string
 	// Meta
+	Id       string
 	Domain   string
 	Slug     string
 	Template string // template file to use
@@ -65,6 +76,17 @@ func joinRunes(runes ...rune) string {
 		sb.WriteRune(r)
 	}
 	return sb.String()
+}
+
+func pseudo_uuid() (uuid string) {
+	b := make([]byte, 16)
+	_, err := rand.Read(b)
+	if err != nil {
+		fmt.Println("Error: ", err)
+		return
+	}
+	uuid = fmt.Sprintf("%X-%X-%X-%X", b[0:2], b[2:4], b[4:6], b[6:8])
+	return
 }
 
 
@@ -151,6 +173,7 @@ func RandomPages (max_pages int, parent *Page) *[]Page {
 	        t:=strings.Title(randString(rand.Intn(5)+2))
 	        p:= Page{Title: t,
 	                 Name: t,
+				     Id: pseudo_uuid(),
 					 Slug: strings.ToLower(t),
 					 Visible: true,
 					 Template: "standard_page.html",
@@ -166,7 +189,8 @@ func RandomPages (max_pages int, parent *Page) *[]Page {
 
 func RandomSite () *Page {
     p := Page{Title: "Frontpage",
-			  Name: "Frontpage",
+		      Name: "Frontpage",
+		      Id: pseudo_uuid(),
 			  Slug: "",
 			  Template: "standard_page.html",
 			  Content: randSentence(50),
@@ -184,6 +208,23 @@ func RandomCMS () CMS {
     return cms
 }
 
+
+func LoadConfig(config_path string) (Config,error) {
+	var config Config
+
+	if Exists(config_path) {
+		dat, _ := ioutil.ReadFile(config_path)
+		err := json.Unmarshal(dat, &config)
+		if err != nil {
+			fmt.Println("error:", err)
+		} else {
+			return config, nil
+		}
+	} else {
+		fmt.Println("config.json file not found")
+	}
+	return config, errors.New("Config not loaded")
+}
 
 func init() {
     rand.Seed(time.Now().UnixNano())

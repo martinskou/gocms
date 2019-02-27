@@ -15,11 +15,18 @@ in a controlable manner, and easy to install and update.
 
 Use:
 
-cd src
+> cd src
 
-Run server:
+Run server using go run:
 
-> go run . server
+> go run . startserver ../config/config.json
+
+Build server:
+
+> go build .
+> cp gocms ../bin/
+> cd ..
+> bin/gocms config/config.json
 
 Build some dependency (folder must include build.json file):
 

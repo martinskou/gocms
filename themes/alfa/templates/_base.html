@@ -1,17 +1,17 @@
-{{define "base"}}<!DOCTYPE html>
+<!DOCTYPE html>
   <html>
       <head>
           <meta http-equiv="content-type" content="text/html; charset=utf-8">
           <meta name="viewport" content="width=device-width, initial-scale=1">
 
-          <title>Aviva Wakizashi - {{block "title" .}} {{end}}</title>
+          <title>{{block "title" .}} {{end}}</title>
 
-          <link rel="stylesheet" href="/cms_assets/bundle.css" type='text/css'>
-          <script src="/cms_assets/bundle.js"></script>
+          <link rel="stylesheet" href="/theme_assets/bundle.css" type='text/css'>
+          <script src="/theme_assets/bundle.js"></script>
 
     </head>
     <body>
       {{block "body" .}} {{end}}
     </body>
   </html>
-{{end}}
+

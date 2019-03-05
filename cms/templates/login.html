@@ -1,4 +1,4 @@
-{{template "base" .}}
+{{template "_base.html" .}}
 
 {{define "title"}}
   Wakizashi Login
@@ -12,98 +12,53 @@
 
 <div class="columns is-fullheight">
   <div id="sidebar" class="column is-2 is-sidebar-menu is-hidden-mobile">
+  </div>
 
-
-
-<!--	
-    <aside class="menu">
-  <p class="menu-label">
-    General
-  </p>
-  <ul class="menu-list">
-    <li><a>Dashboard</a></li>
-    <li><a>Customers</a></li>
-  </ul>
-  <p class="menu-label">
-    Administration
-  </p>
-  <ul class="menu-list">
-    <li><a>Team Settings</a></li>
-    <li>
-      <a class="is-active">Manage Your Team</a>
-      <ul>
-        <li><a>Members</a></li>
-        <li><a>Plugins</a></li>
-        <li><a>Add a member</a></li>
-      </ul>
-    </li>
-    <li><a>Invitations</a></li>
-    <li><a>Cloud Storage Environment Settings</a></li>
-    <li><a>Authentication</a></li>
-  </ul>
-  <p class="menu-label">
-    Transactions
-  </p>
-  <ul class="menu-list">
-    <li><a>Payments</a></li>
-    <li><a>Transfers</a></li>
-    <li><a>Balance</a></li>
-  </ul>
-	</aside>-->
-	
-</div>
   <div class="column is-main-content">
-
 
 	<br><br><br>
 
+	<div id="login" class="columns is-mobile is-centered">
+	  <div class="column is-half">
 
-<div id="login" class="columns is-mobile is-centered">
-  <div class="column is-half">
-
-	<h1 class="subtitle">Login</h1>
-
-	<form v-on:submit.prevent>
+		<h1 class="subtitle">Login</h1>
+		<form v-on:submit.prevent>
 	  
-<div class="field">
-  <label class="label">E-mail</label>
-  <div class="control">
-    <input class="input" type="email" placeholder="E-mail" v-model="email">
-  </div>
-  <p class="help">Den e-mail adresse du er oprettet med i systemet.</p>
-</div>
+		  <div class="field">
+			<label class="label">E-mail</label>
+			<div class="control">
+			  <input class="input" type="email" placeholder="E-mail" v-model="email">
+			</div>
+			<p class="help">Den e-mail adresse du er oprettet med i systemet.</p>
+		  </div>
 
+		  <div class="field">
+			<label class="label">Adgangskode</label>
+			<div class="control">
+			  <input class="input" type="password" placeholder="Adgangskode" v-model="password">
+			</div>
+			<p class="help">Din adgangskode.</p>
+		  </div>
 
-<div class="field">
-  <label class="label">Adgangskode</label>
-  <div class="control">
-    <input class="input" type="password" placeholder="Adgangskode" v-model="password">
-  </div>
-  <p class="help">Din adgangskode.</p>
-</div>
+		  <div class="field is-grouped">
+			<div class="control">
+			  <button type="submit" class="button is-orange" v-bind:disabled="isLoginDisabled" v-on:click="tryLogin">Login</button>
+			</div>
+			<div class="control">
+			  <button type="button" class="button is-boring" v-bind:disabled="isForgotDisabled" v-on:click="tryForgot">Glemt adgangskode</button>
+			</div>
+		  </div>
 
+		</form>
 
-<div class="field is-grouped">
-  <div class="control">
-	<button type="submit" class="button is-orange" v-bind:disabled="isLoginDisabled" v-on:click="tryLogin">Login</button>
-  </div>
-  <div class="control">
-	<button type="button" class="button is-boring" v-bind:disabled="isForgotDisabled" v-on:click="tryForgot">Glemt adgangskode</button>
-  </div>
-</div>
-
-</form>
-
-  </div>
-</div>
-
+	  </div>
+	</div>
 
   </div>
 </div>
 
 
 <script>
-
   
       var login_vue = new Vue({
           delimiters: ['${', '}'],
@@ -120,10 +75,18 @@
 		  },
 		  methods: {
 			  tryLogin () {
-				  console.log("login");
+	//			  console.log("login");
 				  post("/aviva/login/authenticate",{"email":this.email,"password":this.password},function(x) {
-					  window.location.reload();
-				  }, function (y) { alert(y); });
+					  window.x=x;
+					  console.log(x);
+					  if (x["Status"]=="OK") {
+						  console.log("OK");
+						  window.location.href=x["Data"]["Goto"];
+					  }
+//					  window.location.reload();
+				  }, function (y) {
+					  alert(y);
+				  });
 				  return false;
 			  },
 			  tryForgot () {
@@ -134,11 +97,7 @@
 		  
         })
 	  
-    </script>		
-
-		
-
-
+</script>		
 
 
 {{end}}

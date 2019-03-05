@@ -1,0 +1,158 @@
+
+
+
+{{define "menu_top"}}
+
+ 
+
+ <div id="navigation">
+	  
+   <nav class="navbar" role="navigation" aria-label="main navigation">
+     <div class="navbar-brand">
+       <a class="navbar-item" href="https://bulma.io">
+         <img src="/cms_assets/img/logo_hvid.svg" width="112" height="28">
+       </a>
+
+       <a role="button" class="navbar-burger burger" aria-label="menu" aria-expanded="false" data-target="navbarBasicExample">
+         <span aria-hidden="true"></span>
+         <span aria-hidden="true"></span>
+         <span aria-hidden="true"></span>
+       </a>
+     </div>
+
+     <div id="navbarBasicExample" class="navbar-menu">
+       <div class="navbar-start">
+
+		 {{ if .user }}
+		 <div class="navbar-item has-dropdown is-hoverable">
+           <a class="navbar-link" onclick="document.getElementById('page_filter').focus();">Pages</a>
+		   
+           <div class="navbar-dropdown">
+             <a href="/aviva/pages" class="navbar-item">Overview</a>
+
+			 <div  id="pageselector">
+	           <div class="navbar-item">
+				 <input type="text" id="page_filter" class="input" v-model="filter" v-on:keyup="change_filter" placeholder="Search"><br><br>
+			   </div>
+	           <div v-for="(p,index) in pageList" v-if="index <= 15">
+				 <a class="navbar-item" v-bind:href="'/aviva/page/' + p.id">
+				   ${index} : ${ p.title } [${p.id}]
+				 </a>
+			   </div>
+			 </div>
+			 
+		   </div>
+		 </div>
+			  
+		 <a class="navbar-item">
+		   Files
+		 </a>
+
+		 <div class="navbar-item has-dropdown is-hoverable">
+           <a class="navbar-link">Data</a>
+		   
+           <div class="navbar-dropdown">
+             <a href="/aviva/data/config" class="navbar-item">Config</a>
+             <a href="/aviva/data/pages" class="navbar-item">Pages</a>
+			 
+           </div>
+         </div>
+		 
+   		 <a href="/aviva/logout" class="navbar-item">
+		   Logout {{.user}}
+		 </a>
+		 {{ else }}
+   		 <a href="/aviva" class="navbar-item">
+		   Login
+		 </a>			  
+		 {{ end }}
+		 
+       </div>
+
+       <div class="navbar-end">
+         <div class="navbar-item">
+         </div>
+       </div>
+     </div>
+   </nav>
+
+ </div>
+
+
+ {{ if .user }}
+    <script>
+      var pageselector = new Vue({
+          delimiters: ['${', '}'],
+          el: '#pageselector',
+		  data: {
+			  display:true,
+			  filter:"",
+			  pageselector: 'You loaded this page on ' + new Date().toLocaleString(),
+			  pages: [
+				  {title: "{{.pages.Title}}" , id:"{{.pages.Id}}" },
+				  {{range .pages.Children}}
+				  {title: "{{.Title}}" , id:"{{.Id}}" },
+				  {{range .Children}}
+				  {title: "- {{.Title}}" , id:"{{.Id}}" },
+				  {{range .Children}}
+				  {title: "- - {{.Title}}" , id:"{{.Id}}" },
+				  {{end}}
+				  {{end}}
+				  {{end}}
+			  ]
+			  
+		  },
+		  computed: {
+			  pageList() {
+				  var f=this.filter.toLowerCase();
+				  return this.pages.filter(function (p) {
+					  return p.title.toLowerCase().indexOf(f) !== -1;
+				  });
+			  }
+
+		  },
+		  methods: {
+			  change_filter (e) {
+			  },
+			  toggle () {
+				  this.display = !this.display;
+				  console.log(this.display);
+			  }
+		  }
+		  
+      })
+	</script>
+	{{ end }}
+
+	<script>
+
+        document.addEventListener('DOMContentLoaded', () => {
+
+          // Get all "navbar-burger" elements
+          const $navbarBurgers = Array.prototype.slice.call(document.querySelectorAll('.navbar-burger'), 0);
+
+          // Check if there are any navbar burgers
+          if ($navbarBurgers.length > 0) {
+
+            // Add a click event on each of them
+            $navbarBurgers.forEach( el => {
+              el.addEventListener('click', () => {
+
+                // Get the target from the "data-target" attribute
+                const target = el.dataset.target;
+                const $target = document.getElementById(target);
+
+                // Toggle the "is-active" class on both the "navbar-burger" and the "navbar-menu"
+                el.classList.toggle('is-active');
+                $target.classList.toggle('is-active');
+
+              });
+            });
+          }
+
+        });
+
+    </script>
+
+	
+{{end}}

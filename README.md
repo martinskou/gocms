@@ -32,7 +32,9 @@ Build some dependency (folder must include build.json file):
 
 > go run . bundle ../dependencies
 
+Watch for changes and re-bundle:
 
+> go run . watch ../themes/alfa/dependencies
 
 ## CMS
 

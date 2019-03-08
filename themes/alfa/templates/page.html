@@ -6,15 +6,12 @@
 
 {{define "body"}}
 
-
-
-<section class="section">
     <div class="container">
 
 
         <nav class="navbar" role="navigation" aria-label="main navigation">
           <div class="navbar-brand">
-            <a class="navbar-item" href="https://bulma.io">
+            <a class="navbar-item" href="/">
               <img src="/theme_assets/img/logo.svg" width="200" height="56">
             </a>
 
@@ -62,65 +59,164 @@
         </nav>
 
 
-<div class="columns">
+    <div id="bct">
+          {{.current.BCT}}
+    </div>
+
+</div>
+	
+<div class="columns" id="title">
   <div class="column">
-      <h1 class="title">{{.current.Title}}</h1>
+    <div class="container">
+	
+      <h1 class="title is-3">{{.current.Title}}</h1>
+	  </div>
   </div>
 </div>
 
+    <div class="container">
+	  
+	  <div class="columns">
+		<div class="column is-half">
+		  {{range .current.ContentForPosition "a"}}
+		  <article>
+          <h2 class="subtitle is-5">{{.Content.Title}}</h2>
+          {{.Content.Content}}
+		  {{if .Content.ImageUrl}}
+		  <figure class="image is-3by2">
+		    <img src="{{.Content.ImageUrl}}">
+			<div class="is-overlay">
+			  <div class="image-text">
+				{{.Content.ImageText}}
+   			  </div>
+			</div>
+		  </figure>
+		  {{end}}
 
-<div class="columns">
-  <div class="column">
-    {{.current.Content}}
-  </div>
-  <div class="column">
-    Second column
-  </div>
-  <div class="column">
-    Third column
-  </div>
-  <div class="column">
-    Fourth column
 
-    {{if .current.Parent}}
-    <aside class="menu">
-      <p class="menu-label">
-        {{if .current.Parent.Parent}}
-            {{.current.Parent.Parent.Title}}
-        {{else}}
-            Submenu
-        {{end}}
-      </p>
-      <ul class="menu-list">
-          {{range .current.Parent.Children}}
-              <li>
-                  <ul>
+
+
+
+		  
+		  {{if .Content.Children}}
+		  <div id="tab_app_{{.Content.Id}}">
+			
+		  <div class="tabs">
+			<ul>
+			  <li v-for="(c,index) in childList" :key="c.id" v-on:click="tab_click" v-bind:class="{ 'is-active': c.visible }">
+				<a v-bind:id="c.id">${c.title}</a></li>
+			</ul>
+		  </div>
+
+		  <div  v-for="(c,index) in childList" class="box" v-if="c.visible">
+				${c.content}
+		  </div>
+			  
+		  </div>
+
+
+    <script>
+        var tab_app = new Vue({
+          delimiters: ['${', '}'],
+          el: '#tab_app_{{.Content.Id}}',
+			data: {
+				childList: [
+					{{range .Content.Children}}
+  	 				  {id: "{{.Id}}", title: "{{.Title}}", visible: false, content: "{{.Content}}" },
+					{{end}}
+					
+				]
+			},
+			created: function () {
+				this.childList[0].visible=true;
+			},
+			
+			methods: {
+				tab_click (e) {
+					var show_id=e.target.id;
+					this.childList.forEach(function (item) {
+						if (item.id==show_id) {
+							item.visible=true;
+						} else {
+							item.visible=false;
+						}
+					});
+					
+				}
+			}
+        });
+    </script>
+
+	{{end}}
+
+
+			  
+		  </article>
+		  {{end}}
+		</div>
+		
+		<div class="column">
+		  {{range .current.ContentForPosition "b"}}
+		  <article>
+          <h2 class="subtitle is-5">{{.Content.Title}}</h2>
+          {{.Content.Content}}
+		  {{if .Content.ImageUrl}}
+		  <figure class="image is-3by2">
+		    <img src="{{.Content.ImageUrl}}">
+			<div class="is-overlay">
+			  <div class="image-text">
+				{{.Content.ImageText}}
+   			  </div>
+			</div>
+		  </figure>
+		  {{end}}
+		  </article>
+		  {{end}}
+		</div>
+				
+		<div class="column">
+	
+		  {{if .current.Parent}}
+		  <aside class="menu">
+			<p class="menu-label">
+			  Se mere
+			</p>
+			<ul class="menu-list">
+			  {{range .current.Parent.Children}}
+              <li><a href="{{.AbsSlug}}">{{.Title}}</a>
+                <ul>
                   {{range .Children}}
-                      <li><a href="{{.AbsSlug}}">{{.Title}}</a></li>
+                  <li><a href="{{.AbsSlug}}">{{.Title}}</a>
+					<ul>
+					  {{range .Children}}
+                      <li><a href="{{.AbsSlug}}">{{.Title}}</a>
+    				  </li>
+					  {{end}}
+					</ul>
+    			  </li>
                   {{end}}
-                  </ul>
-              </li>
-          {{end}}
-      </ul>
-    </aside>
-    {{end}}
+                </ul>
+	    	  </li>
+			  {{end}}
+			</ul>
+		  </aside>
+		  {{end}}
+		</div>
 
-  </div>
-</div>
+	  </div>
 
 </div>
-</section>
 
 
 <section class="section">
     <div class="container">
-
-<div id="app">
-  ${ message }
-</div>
+	  
+	  <div id="app">
+		${ message }
+	  </div>
 
     </div>
-  </section>
+</section>
 
 
 

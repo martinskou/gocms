@@ -5,13 +5,13 @@ import (
 	//    "go-echo-vue/handlers"
 	"github.com/labstack/echo/v4"
 //	"github.com/labstack/echo/v4/middleware"
-	"html/template"
+	"text/template"
 	"io"
 	"path/filepath"
 //	"io/ioutil"
 	"net/http"
 //    "time"
-    "fmt"
+//    "fmt"
 	"log"
 //	"time"
 	"bytes"
@@ -20,7 +20,7 @@ import (
     //"github.com/martinskou/gocms/gdb"
 
 //	"github.com/gorilla/sessions"
-	
+
   "github.com/gorilla/sessions"
   "github.com/labstack/echo-contrib/session"
 	//    "github.com/labstack/echo/engine/standard"
@@ -37,11 +37,15 @@ type TemplateRenderer struct {
 
 // Render renders a template document
 func (t *TemplateRenderer) Render(w io.Writer, name string, data interface{}, c echo.Context) error {
-	log.Println("Render", name,t.rendertype)
 	template, exists := t.templates[name]
 	if exists {
-		return template.ExecuteTemplate(w, name, data)
+		err := template.ExecuteTemplate(w, name, data)
+		if err!=nil {
+			log.Printf(err.Error())
+		}
+		return err
 	} else {
+		log.Printf("Template "+name+" not found")
 		return errors.New("Template "+name+" not found")
 	}
 }
@@ -67,27 +71,27 @@ func make_templates(cmsPartialsGlob string ,cmsTemplateGlob string) map[string]*
 			log.Println("Make template:",f)
 			t:=template.New(f)
 			t.ParseFiles(x)
-			t.ParseFiles(cms_partials...)			
+			t.ParseFiles(cms_partials...)
 			cms_templates[f]=t
 		}
 	}
 	return cms_templates
 }
 
-func render_site_page(site_templates map[string]*template.Template, p *Page, root_page *Page,config Config, c echo.Context) ([]byte, error) {
-	site_renderer := &TemplateRenderer{rendertype: "site", templates: site_templates}			
-	data:=map[string]interface{}{"config":config, "pages":root_page, "current": p}
+func render_site_page(site_templates map[string]*template.Template, p *Page, cms CMS, c echo.Context) ([]byte, error) {
+	site_renderer := &TemplateRenderer{rendertype: "site", templates: site_templates}
+	data:=map[string]interface{}{"config":cms.Config, "pages":cms.Root, "current": p}
 	buf := new(bytes.Buffer)
 	err := site_renderer.Render(buf, "page.html", data, c)
 	return buf.Bytes(), err
 }
 
-func RunServer(base_path string, config_path string) {	
+func RunServer(base_path string, config_path string) {
 	//	db := initDB("storage.db")
 	//	migrate(db)
 
 	log.Println("Base path", base_path)
-	
+
 	e := echo.New()
 	e.Debug=true
 //	e.Use(middleware.Logger())
@@ -98,29 +102,32 @@ func RunServer(base_path string, config_path string) {
 	cmsPartialsGlob := filepath.Join(base_path, "cms/templates/_*.html")
 	siteTemplateGlob := filepath.Join(base_path, "themes/alfa/templates/*.html")
 	sitePartialsGlob := filepath.Join(base_path, "themes/alfa/templates/_*.html")
-	
+
 	cms_templates := make_templates(cmsPartialsGlob,cmsTemplateGlob)
 	site_templates := make_templates(sitePartialsGlob,siteTemplateGlob)
 
 	cms_renderer := &TemplateRenderer{rendertype: "cms", templates: cms_templates}
 
-	for _, t := range cms_renderer.templates {
-		fmt.Println(t.Name(),t)
-	}
+	//for _, t := range cms_renderer.templates {
+	//	fmt.Println(t.Name(),t)
+	//}
 
-	
 	config, err := LoadConfig(config_path)
 	if err!=nil {
-		fmt.Println("Config file could not be loaded")
+		log.Println("Config file "+config_path+" could not be loaded")
 		return
 	}
-	
-	root_page := RandomSite()
+
+	cms := RandomCMS()
+	root_page := cms.Root // RandomPageHierarchy()
+//	log.Printf("ROOT : %+v\n", root_page)
+
 
 	// Attach all pages to Echos router
-	root_page.Apply(func(p Page) {
+	root_page.Apply(func(p *Page) {
 		e.GET(p.AbsSlug(), func(c echo.Context) error {
-			buf,err:=render_site_page(site_templates,&p,root_page,config, c)
+			//log.Printf("%+v\n", p)
+			buf,err:=render_site_page(site_templates,p,cms, c)
 			if err==nil {
 				return c.HTMLBlob(http.StatusOK, buf)
 			} else {
@@ -129,43 +136,58 @@ func RunServer(base_path string, config_path string) {
 		})
 	})
 
-	
+
 
 	e.GET("/aviva/login", func(c echo.Context) error {
-		log.Println("/AVIVA/LOGIN -----------")
-
+		log.Println(c.Path())
 		sess, _ := session.Get("session", c)
-		fmt.Println(sess.Values["email"])
-		
-		data:=map[string]interface{}{"config":config, "pages":root_page, "user": sess.Values["email"]}
-			
+		data:=map[string]interface{}{"cms":cms, "user": sess.Values["email"]}
 		buf := new(bytes.Buffer)
 		if err = cms_renderer.Render(buf, "login.html", data, c); err != nil {
 			return err
 		}
 		return c.HTMLBlob(http.StatusOK, buf.Bytes())
 	})
-	
+
 	e.GET("/aviva", func(c echo.Context) error {
-		log.Println("/AVIVA -----------")		
+		log.Println(c.Path(),"Dashboard")
 
 		sess, _ := session.Get("session", c)
-		fmt.Println(sess.Values["email"])
-		
+
 		if sess.Values["email"]==nil {
 			return c.Redirect(http.StatusFound,"/aviva/login")
 		} else {
-			data:=map[string]interface{}{"config":config, "pages":root_page, "user": sess.Values["email"]}
-			
+			data:=map[string]interface{}{"cms":cms, "user": sess.Values["email"]}
+
 			buf := new(bytes.Buffer)
 			if err = cms_renderer.Render(buf, "dashboard.html", data, c); err != nil {
 				return err
 			}
 			return c.HTMLBlob(http.StatusOK, buf.Bytes())
-		}		
+		}
 	})
 
-	
+
+	e.GET("/aviva/page/:id", func(c echo.Context) error {
+		log.Println(c.Path(),"edit page ID",c.Param("id"))
+
+		sess, _ := session.Get("session", c)
+
+		if sess.Values["email"]==nil {
+			return c.Redirect(http.StatusFound,"/aviva/login")
+		} else {
+			data:=map[string]interface{}{"cms":cms, "user": sess.Values["email"]}
+
+			buf := new(bytes.Buffer)
+			if err = cms_renderer.Render(buf, "page_editor.html", data, c); err != nil {
+				return err
+			}
+			return c.HTMLBlob(http.StatusOK, buf.Bytes())
+		}
+	})
+
+
+
 	e.POST("/aviva/login/authenticate", func(c echo.Context) error {
 		log.Println("/AVIVA/LOGIN/AUTHENTICATE -----------")
 		var r Reply
@@ -188,12 +210,12 @@ func RunServer(base_path string, config_path string) {
 	})
 
 
-	
+
 	e.File("/favicon.ico", filepath.Join(base_path, "themes/alfa/assets/img/favicon.png"))
-	
+
 	e.Static("/cms_assets", filepath.Join(base_path, "cms/assets"))
 	e.Static("/theme_assets", filepath.Join(base_path, "themes/alfa/assets"))
-	
+
 	//	e.File("/", "public/index.html")
 	//	e.GET("/tasks", handlers.GetTasks(db))
 	//	e.PUT("/tasks", handlers.PutTask(db))
@@ -210,4 +232,3 @@ func TestServer() {
     root_page.Print(0,0)
 	//fmt.Printf("%+v\n", root_page)
 }
-

@@ -3,13 +3,13 @@
 
 {{define "menu_top"}}
 
- 
+
 
  <div id="navigation">
-	  
+
    <nav class="navbar" role="navigation" aria-label="main navigation">
      <div class="navbar-brand">
-       <a class="navbar-item" href="https://bulma.io">
+       <a class="navbar-item" href="https://aviva.dk">
          <img src="/cms_assets/img/logo_hvid.svg" width="112" height="28">
        </a>
 
@@ -26,9 +26,9 @@
 		 {{ if .user }}
 		 <div class="navbar-item has-dropdown is-hoverable">
            <a class="navbar-link" onclick="document.getElementById('page_filter').focus();">Pages</a>
-		   
+
            <div class="navbar-dropdown">
-             <a href="/aviva/pages" class="navbar-item">Overview</a>
+             <a href="/aviva/pages" class="navbar-item">Overview ({{len .cms.Root.Children}})</a>
 
 			 <div  id="pageselector">
 	           <div class="navbar-item">
@@ -40,33 +40,55 @@
 				 </a>
 			   </div>
 			 </div>
-			 
+
 		   </div>
 		 </div>
-			  
+
+
+         <div class="navbar-item has-dropdown is-hoverable">
+           <a class="navbar-link" onclick="document.getElementById('page_filter').focus();">Content</a>
+
+           <div class="navbar-dropdown">
+             <a href="/aviva/content" class="navbar-item">Overview ({{len .cms.Content}})</a>
+
+             <div  id="contentselector">
+               <div class="navbar-item">
+                 <input type="text" id="content_filter" class="input" v-model="filter" v-on:keyup="change_filter" placeholder="Search"><br><br>
+               </div>
+               <div v-for="(c,index) in contentList" v-if="index <= 15">
+                 <a class="navbar-item" v-bind:href="'/aviva/content/' + c.id">
+                   ${index} : ${ c.title } [${c.id}] ${c.children}
+                 </a>
+               </div>
+             </div>
+
+           </div>
+         </div>
+
+
 		 <a class="navbar-item">
 		   Files
 		 </a>
 
 		 <div class="navbar-item has-dropdown is-hoverable">
            <a class="navbar-link">Data</a>
-		   
+
            <div class="navbar-dropdown">
              <a href="/aviva/data/config" class="navbar-item">Config</a>
              <a href="/aviva/data/pages" class="navbar-item">Pages</a>
-			 
+
            </div>
          </div>
-		 
+
    		 <a href="/aviva/logout" class="navbar-item">
 		   Logout {{.user}}
 		 </a>
 		 {{ else }}
    		 <a href="/aviva" class="navbar-item">
 		   Login
-		 </a>			  
+		 </a>
 		 {{ end }}
-		 
+
        </div>
 
        <div class="navbar-end">
@@ -89,8 +111,8 @@
 			  filter:"",
 			  pageselector: 'You loaded this page on ' + new Date().toLocaleString(),
 			  pages: [
-				  {title: "{{.pages.Title}}" , id:"{{.pages.Id}}" },
-				  {{range .pages.Children}}
+				  {title: "{{.cms.Root.Title}}" , id:"{{.cms.Root.Id}}" },
+				  {{range .cms.Root.Children}}
 				  {title: "{{.Title}}" , id:"{{.Id}}" },
 				  {{range .Children}}
 				  {title: "- {{.Title}}" , id:"{{.Id}}" },
@@ -100,7 +122,7 @@
 				  {{end}}
 				  {{end}}
 			  ]
-			  
+
 		  },
 		  computed: {
 			  pageList() {
@@ -119,8 +141,43 @@
 				  console.log(this.display);
 			  }
 		  }
-		  
+
       })
+
+
+      var contentselector = new Vue({
+          delimiters: ['${', '}'],
+          el: '#contentselector',
+		  data: {
+			  display:true,
+			  filter:"",
+			  content: [
+				  {{range .cms.Content}}
+				  {title: "{{.Title}}" , id:"{{.Id}}", children: {{len .Children}} },
+				  {{end}}
+			  ]
+
+		  },
+		  computed: {
+			  contentList() {
+				  var f=this.filter.toLowerCase();
+				  return this.content.filter(function (p) {
+					  return p.title.toLowerCase().indexOf(f) !== -1;
+				  });
+			  }
+
+		  },
+		  methods: {
+			  change_filter (e) {
+			  },
+			  toggle () {
+				  this.display = !this.display;
+				  console.log(this.display);
+			  }
+		  }
+
+      })
+
 	</script>
 	{{ end }}
 
@@ -154,5 +211,5 @@
 
     </script>
 
-	
+
 {{end}}

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+//	"os/signal"
 	"path/filepath"
 	"github.com/urfave/cli"
 )
@@ -44,7 +45,7 @@ func main() {
 					fmt.Println("You must specify a path containing a build.json file")
 				} else {
 					work_path, _ := os.Getwd()
-					Watch(filepath.Join(work_path, bundle_path))
+					BundleWatch(filepath.Join(work_path, bundle_path))
 				}
 				return nil
 			}},		
@@ -60,10 +61,28 @@ func main() {
 					work_path, _ := os.Getwd()
 					abs_config_path := filepath.Join(work_path,config_path)
 					base_path := filepath.Dir(filepath.Dir(abs_config_path))
+					//quit := make(chan os.Signal)
 					RunServer(base_path,config_path)
 				}
 				return nil
 			}},
+		{
+			Name:    "reloadserver",
+			Aliases: []string{"R"},
+			Usage:   "start gocms server and reload on change",
+			Action: func(c *cli.Context) error {
+				config_path := c.Args().First()
+				if config_path=="" {
+					fmt.Println("You must specify a config.json file")
+				} else {
+					work_path, _ := os.Getwd()
+					abs_config_path := filepath.Join(work_path,config_path)
+					base_path := filepath.Dir(filepath.Dir(abs_config_path))
+					ReloaderWatch(base_path,config_path)
+				}
+				return nil
+			}},
+		
 		{
 			Name:    "test",
 			Aliases: []string{"t"},

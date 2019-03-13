@@ -55,6 +55,18 @@ type Content struct {
 	Children   []*Content
 }
 
+
+/*
+func (c *Content) MarshalJSON() ([]byte, error) {
+	return json.Marshal(&struct {
+		Title     string
+	}{
+		Title:       c.Title,
+	})
+}
+*/
+
+
 type ContentLink struct {
 	Content    *Content
 	Position   string  // name of position in template
@@ -62,9 +74,34 @@ type ContentLink struct {
 	Visible    bool
 }
 
+
+
+type ContentLinkJson struct {
+	ContentId    string
+	ContentTitle string
+	Index        int
+	Position     string
+	Visible      bool
+}
+/*
+func (c *ContentLink) MarshalJSON() ([]byte, error) {
+	c:=ContentLinkJson{
+		ContentId:  *c.Content.Id,
+		Index:    c.Index,
+		Position: c.Position,
+		Visible: c.Visible,
+	}
+	return json.Marshal(c)
+}
+*/
+
+
+
 type Page struct {
 	// Content
-	Title    string
+	Title        string
+	Description  string
+	Keywords     string
 	//Content  string
 	ContentLinks []ContentLink
 	// Meta
@@ -83,6 +120,81 @@ type Page struct {
 	Children []*Page
 }
 
+func (p *Page) ContentLinkJsons() []ContentLinkJson {
+	cl := make([]ContentLinkJson,0)
+	for _, c := range p.ContentLinks {
+		clj:=ContentLinkJson{
+			ContentId: c.Content.Id,
+			ContentTitle: c.Content.Title,
+			Index:     c.Index,
+			Position:  c.Position,
+			Visible:   c.Visible,
+		}
+		cl=append(cl,clj)
+	}
+	return cl
+}
+
+
+func (p *Page) ChildHierarchyList() []*Page {
+	pl := make([]*Page,0)
+	for _, p := range p.Children {
+		pl=append(pl,p)
+
+	}
+	return pl
+}
+
+func (p *Page) HasChild(id string) bool {
+	if p.Id==id {
+		return true
+	}
+	found:=false
+	for _, c := range p.Children {
+		found=found && c.HasChild(id)
+	}
+	return found
+}
+
+func (p *Page) ChildOf(id string) bool {
+	if p.Id==id {
+		return true
+	}
+	parent := p.Parent
+	if parent != nil {
+		for parent != nil {
+			if parent.Id==id {
+				return true
+			}
+			parent = parent.Parent
+		}
+	}
+	return false
+}
+
+/*
+func (p *Page) MarshalJSON() ([]byte, error) {
+	return json.Marshal(&struct {
+		Title     string
+		Id        string
+		Domain    string
+		Slug      string
+		Template  string // template file to use
+		Class     string
+		Redirect  string // takes precedence if defined
+		
+	}{
+		Id:       p.Id,
+		Title:    p.Title,
+		Domain:    p.Domain,
+		Slug:       p.Slug,
+		Template:       p.Template,
+		Class:       p.Class,
+		Redirect:       p.Redirect,
+	})
+}
+*/
+
 func (p *Page) ContentForPosition(pos string) []ContentLink {
 	cl := make([]ContentLink,0)
 	for _, c := range p.ContentLinks {
@@ -94,10 +206,12 @@ func (p *Page) ContentForPosition(pos string) []ContentLink {
 }
 
 
+
 type CMS struct {
 	Config   Config
 	Root     *Page
 	Content  []*Content
+	Path     string
 }
 
 func join(strs ...string) string {
@@ -204,6 +318,21 @@ func (p Page) AbsSlug() string {
 	return slug
 }
 
+func (p *Page) Find(field string, value string) *Page {
+	if p.Id==value {
+		return p
+	}
+	for _,c := range p.Children {
+		r := c.Find(field,value)
+		if r!=nil {
+			return r
+		}
+	}
+	return nil
+}
+
+
+
 func (c Content) HasChildren() bool {
 	return len(c.Children)>0
 }
@@ -291,16 +420,24 @@ func FillPagesWithContent(cms *CMS) {
 	//	p.Title="DEMO!"
 		cll := len(cms.Content)
 		mx := rand.Intn(5)+3
+		id_a, id_b := 0, 0
+		var cp string
+		var idx int
 		for i:=0; i<mx; i++ {
 			c := cms.Content[rand.Intn(cll)]
-			cp:="a"
 			if rand.Intn(2)==0 {
 				cp="b"
+				idx=id_a
+				id_a+=1
+			} else {
+				cp="a"
+				idx=id_b				
+				id_b+=1
 			}
 			cl := ContentLink{
-				Content:    c, // &(*cms.Content)[0],
-				Position:   cp,  // name of position in template
-				Index:      0,     // index in position
+				Content:    c,    // &(*cms.Content)[0],
+				Position:   cp,   // name of position in template
+				Index:      idx,  // index in position
 				Visible:    true}
 			p.ContentLinks=append(p.ContentLinks,cl)
 		}

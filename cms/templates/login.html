@@ -28,6 +28,7 @@
 			<label class="label">E-mail</label>
 			<div class="control">
 			  <input class="input" type="email" placeholder="E-mail" v-model="email">
+			  <input type="checkbox" v-model="remember" true-value="yes" false-value="no"> Husk email.
 			</div>
 			<p class="help">Den e-mail adresse du er oprettet med i systemet.</p>
 		  </div>
@@ -66,6 +67,15 @@
 		  data: {
 			  email:"",
 			  password:"",
+			  remember:"no",
+		  },
+		  created: function () {
+		  	  if (localStorage.remember) {
+				  this.remember = localStorage.remember;
+			  }
+		  	  if (localStorage.email) {
+				  this.email = localStorage.email;
+			  }
 		  },
 		  computed: {
 			  isLoginDisabled () {
@@ -75,7 +85,14 @@
 		  },
 		  methods: {
 			  tryLogin () {
-	//			  console.log("login");
+				  //			  console.log("login");
+				  if (this.remember=="yes") {
+					  localStorage.email=this.email;
+					  localStorage.remember = "yes";
+				  } else {
+					  localStorage.email="";
+					  localStorage.remember = "no";
+				  }
 				  post("/aviva/login/authenticate",{"email":this.email,"password":this.password},function(x) {
 					  window.x=x;
 					  console.log(x);

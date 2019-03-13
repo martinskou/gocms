@@ -43,16 +43,19 @@ button:focus {
     outline: none;
 }
 
-.input {
+.input,
+.textarea {
 	box-shadow: none;
 }
-.input:active {
+.input:active,
+.textarea:active {
 	box-shadow: none;
-	border-color:#000;
+	border-color:#777;
 }
-.input:focus {
+.input:focus,
+.textarea:focus {
 	box-shadow: none;
-	border-color:#000;
+	border-color:#777;
 }
 
 button.is-orange {

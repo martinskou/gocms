@@ -1,30 +1,18 @@
 package main
 
 import (
-	//    "database/sql"
-	//    "go-echo-vue/handlers"
 	"github.com/labstack/echo/v4"
-//	"github.com/labstack/echo/v4/middleware"
 	"text/template"
 	"io"
 	"path/filepath"
-//	"io/ioutil"
 	"net/http"
-//    "time"
-//    "fmt"
-	"log"
-//	"time"
+    "fmt"
+	log "github.com/sirupsen/logrus"
 	"bytes"
 	"errors"
-    //"./src/data"
-    //"github.com/martinskou/gocms/gdb"
-
-//	"github.com/gorilla/sessions"
-
-  "github.com/gorilla/sessions"
-  "github.com/labstack/echo-contrib/session"
-	//    "github.com/labstack/echo/engine/standard"
-	//    _ "github.com/mattn/go-sqlite3"
+	"github.com/labstack/gommon/color"
+	"github.com/gorilla/sessions"
+	"github.com/labstack/echo-contrib/session"
 )
 
 const debug = true
@@ -36,7 +24,16 @@ type TemplateRenderer struct {
 }
 
 // Render renders a template document
-func (t *TemplateRenderer) Render(w io.Writer, name string, data interface{}, c echo.Context) error {
+func (t *TemplateRenderer) Render(base_path string, w io.Writer, name string, data interface{}, c echo.Context) error {
+
+	// RELOAD
+	cmsTemplateGlob := filepath.Join(base_path, "cms/templates/*.html")
+	cmsPartialsGlob := filepath.Join(base_path, "cms/templates/_*.html")
+	cms_templates := make_templates(cmsPartialsGlob,cmsTemplateGlob)
+	cms_renderer := &TemplateRenderer{rendertype: "cms", templates: cms_templates}
+	t = cms_renderer
+
+	
 	template, exists := t.templates[name]
 	if exists {
 		err := template.ExecuteTemplate(w, name, data)
@@ -54,7 +51,7 @@ func UserSession(email string, c echo.Context) {
 	sess, _ := session.Get("session", c)
 	sess.Options = &sessions.Options{
 		Path:     "/",
-		MaxAge:   180,  // 86400 * 7,
+		MaxAge:   60*10,  // 86400 * 7,
 		HttpOnly: true,
 	}
 	sess.Values["email"] = c.FormValue("email")
@@ -68,7 +65,7 @@ func make_templates(cmsPartialsGlob string ,cmsTemplateGlob string) map[string]*
 	for _,x := range files {
 		f:=filepath.Base(x)
 		if f[0]!='_' {
-			log.Println("Make template:",f)
+			//log.Println("Make template:",f)
 			t:=template.New(f)
 			t.ParseFiles(x)
 			t.ParseFiles(cms_partials...)
@@ -82,18 +79,32 @@ func render_site_page(site_templates map[string]*template.Template, p *Page, cms
 	site_renderer := &TemplateRenderer{rendertype: "site", templates: site_templates}
 	data:=map[string]interface{}{"config":cms.Config, "pages":cms.Root, "current": p}
 	buf := new(bytes.Buffer)
-	err := site_renderer.Render(buf, "page.html", data, c)
+	err := site_renderer.Render(cms.Path, buf, "page.html", data, c)
 	return buf.Bytes(), err
+}
+
+func versionInfo(e *echo.Echo) {
+	colorer := color.New()
+	fmt.Println("")
+	fmt.Println(`   _____       .__               `)
+	fmt.Println(`  /  _  \___  _|__|__  _______   `)
+	fmt.Println(` /  /_\  \  \/ /  \  \/ /\__  \  `)
+	fmt.Println(`/    |    \   /|  |\   /  / __ \_`)
+	fmt.Println(`\____|__  /\_/ |__| \_/  (____  /`)
+	fmt.Println(`        \/                    \/ `,colorer.Red("v1.0.0"))
+	fmt.Println("High performance minimal CMS")
+	//fmt.Printf("%v\n", "♥" == "\u2665")
+	fmt.Println(colorer.Blue("https://aviva.dk"))
 }
 
 func RunServer(base_path string, config_path string) {
 	//	db := initDB("storage.db")
 	//	migrate(db)
 
-	log.Println("Base path", base_path)
-
 	e := echo.New()
+	versionInfo(e)
 	e.Debug=true
+	e.HideBanner=true
 //	e.Use(middleware.Logger())
 //	e.Use(middleware.Recover())
 	e.Use(session.Middleware(sessions.NewCookieStore([]byte("secret"))))
@@ -119,11 +130,10 @@ func RunServer(base_path string, config_path string) {
 	}
 
 	cms := RandomCMS()
-	root_page := cms.Root // RandomPageHierarchy()
-//	log.Printf("ROOT : %+v\n", root_page)
+	root_page := cms.Root
+	cms.Path = base_path
 
-
-	// Attach all pages to Echos router
+	// Attach all user defined pages to Echos router
 	root_page.Apply(func(p *Page) {
 		e.GET(p.AbsSlug(), func(c echo.Context) error {
 			//log.Printf("%+v\n", p)
@@ -137,78 +147,32 @@ func RunServer(base_path string, config_path string) {
 	})
 
 
-
 	e.GET("/aviva/login", func(c echo.Context) error {
-		log.Println(c.Path())
-		sess, _ := session.Get("session", c)
-		data:=map[string]interface{}{"cms":cms, "user": sess.Values["email"]}
-		buf := new(bytes.Buffer)
-		if err = cms_renderer.Render(buf, "login.html", data, c); err != nil {
-			return err
-		}
-		return c.HTMLBlob(http.StatusOK, buf.Bytes())
+		return ViewLogin(cms,c,cms_renderer);
 	})
 
 	e.GET("/aviva", func(c echo.Context) error {
-		log.Println(c.Path(),"Dashboard")
-
-		sess, _ := session.Get("session", c)
-
-		if sess.Values["email"]==nil {
-			return c.Redirect(http.StatusFound,"/aviva/login")
-		} else {
-			data:=map[string]interface{}{"cms":cms, "user": sess.Values["email"]}
-
-			buf := new(bytes.Buffer)
-			if err = cms_renderer.Render(buf, "dashboard.html", data, c); err != nil {
-				return err
-			}
-			return c.HTMLBlob(http.StatusOK, buf.Bytes())
-		}
+		return ViewDashboard(cms,c,cms_renderer);
 	})
-
 
 	e.GET("/aviva/page/:id", func(c echo.Context) error {
-		log.Println(c.Path(),"edit page ID",c.Param("id"))
-
-		sess, _ := session.Get("session", c)
-
-		if sess.Values["email"]==nil {
-			return c.Redirect(http.StatusFound,"/aviva/login")
-		} else {
-			data:=map[string]interface{}{"cms":cms, "user": sess.Values["email"]}
-
-			buf := new(bytes.Buffer)
-			if err = cms_renderer.Render(buf, "page_editor.html", data, c); err != nil {
-				return err
-			}
-			return c.HTMLBlob(http.StatusOK, buf.Bytes())
-		}
+		return ViewPage(cms,c,cms_renderer);
 	})
 
-
+	e.GET("/aviva/page/json/:id", func(c echo.Context) error {
+		return JsonGetPage(cms,c,cms_renderer);
+	})
+	e.POST("/aviva/page/json/:id", func(c echo.Context) error {
+		return JsonPostPage(cms,c,cms_renderer);
+	})
 
 	e.POST("/aviva/login/authenticate", func(c echo.Context) error {
-		log.Println("/AVIVA/LOGIN/AUTHENTICATE -----------")
-		var r Reply
-		if (c.FormValue("email")=="msd@infoserv.dk") {
-			UserSession(c.FormValue("email"), c)
-			data := make(map[string]interface{})
-			data["Goto"] = "/aviva"
-			r = Reply{Status: "OK", Data: data}
-		} else {
-			r = Reply{Status: "FAIL", Data: ""}
-		}
-		return c.JSON(http.StatusOK,r)
+		return PostAuthenticate(cms,c,cms_renderer);
 	})
 
 	e.GET("/aviva/logout", func(c echo.Context) error {
-		sess, _ := session.Get("session", c)
-		sess.Values["email"] = nil
-		sess.Save(c.Request(), c.Response())
-		return c.Redirect(http.StatusFound,"/aviva/login")
+		return GetLogout(cms,c,cms_renderer)
 	})
-
 
 
 	e.File("/favicon.ico", filepath.Join(base_path, "themes/alfa/assets/img/favicon.png"))
@@ -221,7 +185,30 @@ func RunServer(base_path string, config_path string) {
 	//	e.PUT("/tasks", handlers.PutTask(db))
 	//	e.DELETE("/tasks/:id", handlers.DeleteTask(db))
 
-	e.Logger.Fatal(e.Start(config.Port))
+//	go func() {
+//		if err := e.Start(config.Port); err != nil {
+//			e.Logger.Info("shutting down the server")
+//		}
+		e.Logger.Fatal(e.Start(config.Port))
+//	}()
+
+/*	<-quit
+	
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	if err := e.Shutdown(ctx); err != nil {
+		e.Logger.Fatal(err)
+	}
+*/	
+}
+
+func ConvertStruct(s []ContentLink) string {
+	fmt.Printf("%+v\n", s)
+	fmt.Printf("(%v, %T)\n", s, s)
+	
+//  map[string]interface{}
+//	var result map[string]interface{}
+	return "ok"
 }
 
 func TestServer() {
@@ -229,6 +216,9 @@ func TestServer() {
     //gdb.TestRnd()
 	cms:=RandomCMS()
     root_page := cms.Root
-    root_page.Print(0,0)
+  //  root_page.Print(0,0)
 	//fmt.Printf("%+v\n", root_page)
+	fmt.Printf("%+v\n\n", root_page.ContentLinkJsons())
+//	fmt.Printf("%+v\n\n", ConvertStruct(root_page.ContentLinks))
+	
 }

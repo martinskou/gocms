@@ -27,11 +27,13 @@ type TemplateRenderer struct {
 func (t *TemplateRenderer) Render(base_path string, w io.Writer, name string, data interface{}, c echo.Context) error {
 
 	// RELOAD
-	cmsTemplateGlob := filepath.Join(base_path, "cms/templates/*.html")
-	cmsPartialsGlob := filepath.Join(base_path, "cms/templates/_*.html")
-	cms_templates := make_templates(cmsPartialsGlob,cmsTemplateGlob)
-	cms_renderer := &TemplateRenderer{rendertype: "cms", templates: cms_templates}
-	t = cms_renderer
+	if t.rendertype=="cms" {
+		cmsTemplateGlob := filepath.Join(base_path, "cms/templates/*.html")
+		cmsPartialsGlob := filepath.Join(base_path, "cms/templates/_*.html")
+		cms_templates := make_templates(cmsPartialsGlob,cmsTemplateGlob)
+		cms_renderer := &TemplateRenderer{rendertype: "cms", templates: cms_templates}
+		t = cms_renderer
+	}
 
 	
 	template, exists := t.templates[name]
@@ -58,6 +60,17 @@ func UserSession(email string, c echo.Context) {
 	sess.Save(c.Request(), c.Response())
 }
 
+func templateIte(start, end int) (stream chan int) {
+    stream = make(chan int)
+    go func() {
+        for i := start; i <= end; i++ {
+            stream <- i
+        }
+        close(stream)
+    }()
+    return
+}
+
 func make_templates(cmsPartialsGlob string ,cmsTemplateGlob string) map[string]*template.Template {
 	cms_templates := make(map[string]*template.Template)
 	cms_partials,_:=filepath.Glob(cmsPartialsGlob)
@@ -67,6 +80,7 @@ func make_templates(cmsPartialsGlob string ,cmsTemplateGlob string) map[string]*
 		if f[0]!='_' {
 			//log.Println("Make template:",f)
 			t:=template.New(f)
+			t.Funcs(template.FuncMap{"ite": templateIte})
 			t.ParseFiles(x)
 			t.ParseFiles(cms_partials...)
 			cms_templates[f]=t
@@ -77,7 +91,14 @@ func make_templates(cmsPartialsGlob string ,cmsTemplateGlob string) map[string]*
 
 func render_site_page(site_templates map[string]*template.Template, p *Page, cms CMS, c echo.Context) ([]byte, error) {
 	site_renderer := &TemplateRenderer{rendertype: "site", templates: site_templates}
-	data:=map[string]interface{}{"config":cms.Config, "pages":cms.Root, "current": p}
+	sess, _ := session.Get("session", c)
+	user_email := ""
+	if sess.Values["email"]==nil {
+		user_email = ""
+	} else {
+		user_email = sess.Values["email"].(string)
+	}
+	data:=map[string]interface{}{"config":cms.Config, "cms":cms, "pages":cms.Root, "current": p, "user": user_email}
 	buf := new(bytes.Buffer)
 	err := site_renderer.Render(cms.Path, buf, "page.html", data, c)
 	return buf.Bytes(), err
@@ -157,6 +178,9 @@ func RunServer(base_path string, config_path string) {
 
 	e.GET("/aviva/page/:id", func(c echo.Context) error {
 		return ViewPage(cms,c,cms_renderer);
+	})
+	e.POST("/aviva/page/:id", func(c echo.Context) error {
+		return PostPage(cms,c,cms_renderer);
 	})
 
 	e.GET("/aviva/page/json/:id", func(c echo.Context) error {

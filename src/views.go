@@ -18,12 +18,14 @@ func ViewDashboard(cms CMS, c echo.Context, renderer *TemplateRenderer) error {
 	if sess.Values["email"]==nil {
 		return c.Redirect(http.StatusFound,"/aviva/login")
 	} else {
-		data:=map[string]interface{}{"cms":cms, "user": sess.Values["email"]}
+		
+		data:=map[string]interface{}{"cms":cms, "user": sess.Values["email"], "flashes": sess.Flashes() }
 
 		buf := new(bytes.Buffer)
 		if err := renderer.Render(cms.Path, buf, "dashboard.html", data, c); err != nil {
 			return err
 		}
+		sess.Save(c.Request(), c.Response())
 		return c.HTMLBlob(http.StatusOK, buf.Bytes())
 	}
 }
@@ -47,6 +49,44 @@ func ViewPage(cms CMS, c echo.Context, renderer *TemplateRenderer) error {
 		}
 		return c.HTMLBlob(http.StatusOK, buf.Bytes())
 	}
+}
+func PostPage(cms CMS, c echo.Context, renderer *TemplateRenderer) error {
+	id:=c.Param("id")
+	log.WithFields(log.Fields{"path": c.Path(),"page": id}).Info("ViewPage")
+	sess, _ := session.Get("session", c)
+	if sess.Values["email"]==nil {
+		return c.Redirect(http.StatusFound,"/aviva/login")
+	}
+	
+	current:=cms.Root.Find("Id",id)
+	if current==nil {
+		sess.AddFlash("Side kunne ikke gemmes")
+		sess.Save(c.Request(), c.Response())
+		return c.Redirect(http.StatusFound,"/aviva")
+	}
+
+	current.Title=c.FormValue("title")
+	current.Name=c.FormValue("name")
+	current.Class=c.FormValue("class")
+	current.Slug=c.FormValue("slug")
+	current.Template=c.FormValue("template")
+	current.Description=c.FormValue("Description")
+	current.Keywords=c.FormValue("Keywords")
+//	current.=c.FormValue("")
+
+	new_parent_id := c.FormValue("parent")
+	new_parent := cms.Root.Find("Id",new_parent_id)
+	if new_parent!=nil {
+		current.Parent.RemoveChild(current)
+		new_parent.AddChild(current)
+		log.WithFields(log.Fields{"path": c.Path(),"page": id}).Info("Parentpage set to ", new_parent.Id)
+	} else {
+		sess.AddFlash("Kunne ikke gennem forældre")
+	}
+	
+	sess.AddFlash("Side er gemt")
+	sess.Save(c.Request(), c.Response())
+	return c.Redirect(http.StatusFound,"/aviva")
 }
 
 

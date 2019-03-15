@@ -125,3 +125,8 @@ Simple is often erroneously mistaken for easy.
 Simple != easy.
 
 The benefits of simplicity are: ease of understanding, ease of change, ease of debugging, flexibility.
+
+
+## Todo
+
+Graph Viz integration

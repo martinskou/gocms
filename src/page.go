@@ -136,26 +136,9 @@ func (p *Page) ContentLinkJsons() []ContentLinkJson {
 }
 
 
-func (p *Page) ChildHierarchyList() []*Page {
-	pl := make([]*Page,0)
-	for _, p := range p.Children {
-		pl=append(pl,p)
 
-	}
-	return pl
-}
-
-func (p *Page) HasChild(id string) bool {
-	if p.Id==id {
-		return true
-	}
-	found:=false
-	for _, c := range p.Children {
-		found=found && c.HasChild(id)
-	}
-	return found
-}
-
+// Return true if Page with argument id is a child or decendant
+// of Page p.
 func (p *Page) ChildOf(id string) bool {
 	if p.Id==id {
 		return true
@@ -171,6 +154,25 @@ func (p *Page) ChildOf(id string) bool {
 	}
 	return false
 }
+
+func (p *Page) RemoveChild(child *Page) {
+	found:=-1
+	for index,c := range p.Children {
+		if c==child {
+			found=index
+		}
+	}
+	if found>-1 {
+		p.Children=append(p.Children[:found], p.Children[found+1:]...)
+	}
+}
+
+func (p *Page) AddChild(child *Page) {
+	p.Children=append(p.Children,child)
+	child.Parent=p
+}
+
+
 
 /*
 func (p *Page) MarshalJSON() ([]byte, error) {
@@ -213,6 +215,36 @@ type CMS struct {
 	Content  []*Content
 	Path     string
 }
+
+type PageWrap struct {
+	Page     *Page
+	Level    int
+	Index    int
+	GlobalIndex int
+}
+
+func (page *Page) AppendPages(page_list *[]PageWrap,level int, index int, gindex *int) {
+	pw := PageWrap{
+		Page: page,
+		Level: level,
+		Index: index,
+	    GlobalIndex: *gindex}
+	*gindex+=1
+	*page_list = append(*page_list,pw)
+	for idx, c := range page.Children {
+		c.AppendPages(page_list,level+1,idx,gindex)
+	}
+}
+
+func (cms CMS) PageList() []PageWrap {
+	page_list := make([]PageWrap,0)
+	gi := 0
+	cms.Root.AppendPages(&page_list,0,0,&gi)
+	return page_list
+}
+
+
+
 
 func join(strs ...string) string {
 	var sb strings.Builder
@@ -303,6 +335,16 @@ func (p Page) BCT() string {
 	}
     return "<nav class=\"breadcrumb has-arrow-separator\" aria-label=\"breadcrumbs\"><ul>"+bct+"</ul></nav>"
 }
+
+func (p Page) CMSBCT() string {
+	bct:=fmt.Sprintf("<li class=\"is-active\"><a class=\"%s\" href=\"#\" aria-current=\"page\">%s</a></li>\n", p.Class, p.Name)
+	for p.Parent != nil {
+		p=*p.Parent
+		bct=fmt.Sprintf("<li><a class=\"%s\" href=\"/aviva/page/%s\">%s</a></li>\n%s", p.Class, p.Id, p.Name, bct)
+	}
+    return "<nav class=\"breadcrumb has-arrow-separator\" aria-label=\"breadcrumbs\"><ul>"+bct+"</ul></nav>"
+}
+
 
 func (p Page) AbsSlug() string {
 	slug := p.Slug

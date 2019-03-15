@@ -9,20 +9,66 @@
 
 {{block "menu_top" .}} {{end}}
 
-
+<div class="container">
+  
 <div class="columns is-fullheight">
+  <!--
   <div id="sidebar" class="column is-2 is-sidebar-menu is-hidden-mobile">
   </div>
+  -->
   
   <div class="column is-main-content">
 
 	<br><br><br>
 
-	<h1>Velkommen</h1>
+	{{range .flashes}}
+	<div class="notification is-info">
+	  <button class="delete"></button>
+	  <p>{{.}}</p>
+	</div>
+	{{end}}
 
-	<br><br><br>
+	
+	<h1 class="title is-5">Velkommen</h1>
 
+
+
+	<table class="table">
+	  <thead>
+		<tr>
+		  <th>#</th>
+		  <th>#</th>
+		  <th>Navn</th>
+		  <th>Rediger</th>
+		  <th>Vis</th>
+		  <th>Id</th>
+		</tr>
+	  </thead>
+	  <tbody>
+	  {{range .cms.PageList}}
+	  <tr>
+		<td>{{.GlobalIndex}}</td>
+		<td>{{.Index}}</td>
+		<td>
+		  {{range $i := ite 0 .Level}} &nbsp;&nbsp; {{ end }}{{.Page.Name}}
+		</td>
+		<td>
+		  <a href="/aviva/page/{{.Page.Id}}">Rediger</a>
+		</td>
+		<td>
+		  <a target="_blank" href="{{.Page.AbsSlug}}">View</a>
+		</td>
+		<td>
+		  {{.Page.Id}}
+		</td>
+	  </tr>
+	  {{end}}
+	  </tbody>
+	</table>			  
+
+	
   </div>
+</div>
 </div>
 
 

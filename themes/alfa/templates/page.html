@@ -53,6 +53,12 @@
             <div class="navbar-end">
               <div class="navbar-item">
 
+			  {{if .user}}
+   			  <a href="/aviva" class="navbar-item">
+				Aviva
+			  </a>
+			  {{ end }}
+
               </div>
             </div>
           </div>
@@ -60,7 +66,7 @@
 
 
     <div id="bct">
-          {{.current.BCT}}
+          {{.current.BCT }}
     </div>
 
 </div>

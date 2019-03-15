@@ -1,258 +1,283 @@
 {{template "_base.html" .}}
 
 {{define "title"}}
-  Wakizashi Dashboard
+	Wakizashi Dashboard
 {{end}}
 
 {{define "body"}}
 
 
-{{block "menu_top" .}} {{end}}
+	{{block "menu_top" .}} {{end}}
 
+	<div class="container">
 
-<div class="columns is-fullheight">
-  <div id="sidebar" class="column is-2 is-sidebar-menu is-hidden-mobile">
-  </div>
-  
-  <div class="column is-main-content">
-
-	  <br><br><br>
-
-      <div id="bct">
-          {{.current.BCT}}
-      </div>
-	  
-	<br><br>
-
-	<h1>Page: {{.current.Title}}</h1>
-
-	<br><br>
-
-	<div class="columns">
-		<div class="column is-half">
-			<h2>Egenskaber</h2>
-
-			<div class="field">
-				<label class="label">ID</label>
-				<div class="control">
-					<input class="input" name="id" disabled value="{{.current.Id}}">
-				</div>
-			</div>
+		<div class="columns is-fullheight">
+			<!--
+				 <div id="sidebar" class="column is-2 is-sidebar-menu is-hidden-mobile">
+				 </div>
+			-->
 			
-			<div class="field">
-				<label class="label">Name</label>
-				<div class="control">
-					<input class="input" name="name" value="{{.current.Name}}">
-				</div>
-				<p class="help">Kort internt navn for siden.</p>
-			</div>
-			
-			
-			<div class="field">
-				<label class="label">Class</label>
-				<div class="control">
-					<input class="input" name="class" value="{{.current.Class}}">
-				</div>
-				<p class="help">Evt. class.</p>
-			</div>
-			
-			<div class="field">
-				<label class="label">Slug</label>
-				<div class="control">
-					<input class="input" name="slug" value="{{.current.Slug}}">
-				</div>
-				<p class="help">Relativ adresse for siden, tilføjes til forrige sides absolutte adresse {{ if .current.Parent}}{{.current.Parent.AbsSlug}}{{end}}.</p>
-			</div>
+			<div class="column is-main-content">
 
-			<div class="field">
-				<label class="label">Template</label>
-				<div class="control">
-					<input class="input" name="template" value="{{.current.Template}}">
-				</div>
-				<p class="help">Template siden skal benytte.</p>
-			</div>
+				<br><br><br>
 
-			<div class="field">
-				<label class="label">Forældre</label>
-				<div class="control">
-					<div class="select">
-						<select name="parent">
-							{{range .cms.Root.Children}}
-								<option value="{{.Id}}" {{if .ChildOf $.current.Id}} disabled {{end}}>{{.Title}} {{if .ChildOf $.current.Id}} CURRENT {{end}} </option>
-								{{range .Children}}
-									<option value="{{.Id}}" {{if .ChildOf $.current.Id}} disabled {{end}}>- {{.Title}} {{if .ChildOf $.current.Id}} CURRENT {{end}}</option>
-									{{range .Children}}
-										<option value="{{.Id}}" {{if .ChildOf $.current.Id}} disabled {{end}}>-- {{.Title}} {{if .ChildOf $.current.Id}} CURRENT {{end}}</option>
-									{{end}}
+				<div id="bct">
+					{{.current.CMSBCT}}
+				</div>
+				
+				<br>
+
+				<h1 class="title">{{.current.Title}}</h1>
+
+				<br>
+
+				<form method="post">
+
+					<div class="columns">
+						<div class="column is-half">
+							<h2 class="title is-4">Egenskaber</h2>
+
+							<div class="field">
+								<label class="label">ID</label>
+								<div class="control">
+									<input class="input" name="id" disabled value="{{.current.Id}}">
+								</div>
+							</div>
+
+							<div class="field">
+								<label class="label">Title</label>
+								<div class="control">
+									<input class="input" name="title" value="{{.current.Title}}">
+								</div>
+								<p class="help">Title for siden.</p>
+							</div>
+							
+							<div class="field">
+								<label class="label">Name</label>
+								<div class="control">
+									<input class="input" name="name" value="{{.current.Name}}">
+								</div>
+								<p class="help">Kort internt navn for siden.</p>
+							</div>
+							
+							
+							<div class="field">
+								<label class="label">Class</label>
+								<div class="control">
+									<input class="input" name="class" value="{{.current.Class}}">
+								</div>
+								<p class="help">Evt. class.</p>
+							</div>
+							
+							<div class="field">
+								<label class="label">Slug</label>
+								<div class="control">
+									<input class="input" name="slug" value="{{.current.Slug}}">
+								</div>
+								<p class="help">Relativ adresse for siden, tilføjes til forrige sides absolutte adresse {{ if .current.Parent}}{{.current.Parent.AbsSlug}}{{end}}.</p>
+							</div>
+
+							<div class="field">
+								<label class="label">Template</label>
+								<div class="control">
+									<input class="input" name="template" value="{{.current.Template}}">
+								</div>
+								<p class="help">Template siden skal benytte.</p>
+							</div>
+
+							<div class="field">
+								<label class="label">Forældre</label>
+								<div class="control">
+									<div class="select">
+										<select name="parent">
+											<option value="{{.cms.Root.Id}}" >{{.cms.Root.Title}} </option>
+											{{range .cms.Root.Children}}
+												<option value="{{.Id}}" {{if .ChildOf $.current.Id}} disabled {{end}} >- {{.Title}} {{if .ChildOf $.current.Id}} underside {{end}} </option>
+												{{range .Children}}
+													<option value="{{.Id}}" {{if .ChildOf $.current.Id}} disabled {{end}} >-- {{.Title}} {{if .ChildOf $.current.Id}} underside {{end}}</option>
+													{{range .Children}}
+														<option value="{{.Id}}" {{if .ChildOf $.current.Id}} disabled {{end}} >--- {{.Title}} {{if .ChildOf $.current.Id}} underside {{end}}</option>
+													{{end}}
+												{{end}}
+											{{end}}
+										</select>
+									</div>
+								</div>
+								<p class="help">Den side som denne side er placeret under i side-hierarkiet.</p>
+							</div>
+							
+						</div>
+						<div class="column is-half">
+							<h2 class="title is-4">SEO</h2>
+							
+							<div class="field">
+								<label class="label">Description</label>
+								<div class="control">
+									<textarea class="textarea" name="description">{{.current.Description}}</textarea>
+								</div>
+								<p class="help">Meta beskrivelse.</p>
+							</div>
+							
+							<div class="field">
+								<label class="label">Keywords</label>
+								<div class="control">
+									<textarea class="textarea" name="keywords">{{.current.Keywords}}</textarea>
+								</div>
+								<p class="help">Meta nøgleord.</p>
+							</div>
+
+						</div>
+					</div>
+					
+					<br><br>
+
+					<div class="field is-grouped">
+						<p class="control">
+							<button class="button is-primary">
+								Submit
+						</a>
+						</p>
+					</div>
+
+				</form>
+				
+				<br><br>
+
+
+				<h2 class="title is-4">Indhold</h2>
+
+				<div class="columns">
+					<div class="column">
+						<h2>Content position A</h2>
+
+						<div id="tab_app_a">
+							
+							<ul>
+								<li v-for="c in contentListSorted" :key="c.index" v-bind:class="{ 'is-active': c.Visible }">
+									<a v-bind:id="c.index"> ${c.ContentTitle} </a> -
+									${c.Index} -
+									[ <a v-on:click="move_up" v-bind:id="c.Index" v-if="c.Index > 0">up</a> / 
+									<a v-on:click="move_down" v-bind:id="c.Index" v-if="c.Index < last_index">down</a> ]
+								</li>
+							</ul>
+
+							<br><br>
+							Add content item:<br>
+							<div class="select">
+								<select v-model="selected">
+									<option v-for="c in allContentList" v-bind:value="c.id">${ c.title }</option>
+    							</select>
+							</div>
+							<br><br>
+							<button class="button" v-on:click="add">Add</button>
+							<br><br>
+							<button class="button is-primary" v-on:click="save">Gem</button>
+							
+						</div>
+						
+						<script>
+						 function printList(lst) {
+							 console.log("Array:");
+							 lst.forEach(function (item) {
+								 console.log(item.title,item.index);
+							 });
+						 }
+						 
+						 var tab_app = new Vue({
+							 delimiters: ['${', '}'],
+							 el: '#tab_app_a',
+							 data: {
+								 contentList: [],
+								 allContentList: [
+									 {{range .cms.Content}}
+									 {title: "{{.Title}}" , id:"{{.Id}}", children: {{len .Children}} },
+									 {{end}}
+								 ],
+								 last_index:0,
+								 selected:0
+							 },
+							 created: function () {
+								 var self = this;			 
+								 get("/aviva/page/json/{{.current.Id}}",{},function (r) {
+									 self.contentList=r.filter(c => c.Position=='a');
+									 self.last_index=self.contentList.length-1;
+								 }, function (e) {
+									 console.log("err",e);
+								 });
+							 },
+							 computed: {
+								 contentListSorted() {
+									 console.log("contentListSorted");
+									 this.contentList.sort(function(a,b) { return parseInt(a.Index) - parseInt(b.Index) });
+									 return this.contentList;
+								 }
+							 },
+							 methods: {
+								 add() {
+									 console.log("add",this.selected);
+									 var idx=0;
+									 if (this.contentList.length>0) {
+										 idx=this.contentList[this.contentList.length-1].Index+1;
+									 }
+									 this.contentList.push({ContentTitle:this.selected,ContentId:this.selected,Position:"a",Index:idx});
+								 },
+								 save () {
+									 var self = this;			 
+									 post_json("/aviva/page/json/{{.current.Id}}",this.contentList,function (r) {
+										 self.contentList=r.filter(c => c.Position=='a');
+										 self.last_index=self.contentList.length-1;
+									 }, function (e) {
+										 console.log("err",e);
+									 });
+								 },
+								 move_up (e) {
+									 var id=parseInt(e.target.id);
+									 var t=this.contentList[id].Index;
+									 this.contentList[id].Index=this.contentList[id-1].Index;
+									 this.contentList[id-1].Index=t;
+								 },
+								 move_down (e) {
+									 var id=parseInt(e.target.id);
+									 var t=this.contentList[id].Index;
+									 this.contentList[id].Index=this.contentList[id+1].Index;
+									 this.contentList[id+1].Index=t;
+								 },
+								 
+								 /*		 tab_click (e) {
+									var show_id=e.target.id;
+									this.contentList.forEach(function (item) {
+									if (item.id==show_id) {
+									item.visible=true;
+									} else {
+									item.visible=false;
+									}
+									});
 									
-								{{end}}
+									}*/
+							 }
+						 });
+						</script>
+
+
+						
+						
+					</div>
+					<div class="column">
+						<h2>Content position B</h2>
+
+						<ul>
+							{{range .current.ContentForPosition "b"}}
+								<li>{{.Content.Title}}</li>
 							{{end}}
-						</select>
+						</ul>
+						
 					</div>
 				</div>
-				<p class="help">Den side som denne side er placeret under i side-hierarkiet.</p>
-			</div>
-			
-		</div>
-		<div class="column is-half">
-			<h2>SEO</h2>
 
-			<div class="field">
-				<label class="label">Title</label>
-				<div class="control">
-					<input class="input" name="title" value="{{.current.Title}}">
-				</div>
-				<p class="help">Title for siden.</p>
-			</div>
-			
-			<div class="field">
-				<label class="label">Description</label>
-				<div class="control">
-					<textarea class="textarea" name="description">{{.current.Description}}</textarea>
-				</div>
-				<p class="help">Meta beskrivelse.</p>
-			</div>
-			
-			<div class="field">
-				<label class="label">Keywords</label>
-				<div class="control">
-					<textarea class="textarea" name="keywords">{{.current.Keywords}}</textarea>
-				</div>
-				<p class="help">Meta nøgleord.</p>
-			</div>
 
-		</div>
-	</div>
-	
-	<br><br><br>
-
-	
-	<div class="columns">
-		<div class="column">
-			<h2>Content position A</h2>
-
-			<div id="tab_app_a">
-				
-				<ul>
-					<li v-for="c in contentListSorted" :key="c.index" v-bind:class="{ 'is-active': c.Visible }">
-						<a v-bind:id="c.index"> ${c.ContentTitle} </a> -
-						${c.Index} -
-						[ <a v-on:click="move_up" v-bind:id="c.Index" v-if="c.Index > 0">up</a> / 
-						<a v-on:click="move_down" v-bind:id="c.Index" v-if="c.Index < last_index">down</a> ]
-					</li>
-				</ul>
-
-				<br><br>
-				Add content item:<br>
-				<select v-model="selected">
-					<option v-for="c in allContentList" v-bind:value="c.id">${ c.title }</option>
-    			</select>
-				<br><br>
-				<button class="button" v-on:click="add">Add</button>
-				<br><br>
-				<button class="button" v-on:click="save">Gem</button>
 				
 			</div>
-			
-			<script>
-			 function printList(lst) {
-				 console.log("Array:");
-				 lst.forEach(function (item) {
-					 console.log(item.title,item.index);
-				 });
-			 }
-			 
-			 var tab_app = new Vue({
-				 delimiters: ['${', '}'],
-				 el: '#tab_app_a',
-				 data: {
-					 contentList: [],
-					 allContentList: [
-						 {{range .cms.Content}}
-						 {title: "{{.Title}}" , id:"{{.Id}}", children: {{len .Children}} },
-						 {{end}}
-					 ],
-					 last_index:0,
-					 selected:0
-				 },
-				 created: function () {
-					 var self = this;			 
-					 get("/aviva/page/json/{{.current.Id}}",{},function (r) {
-						 self.contentList=r.filter(c => c.Position=='a');
-						 self.last_index=self.contentList.length-1;
-					 }, function (e) {
-						 console.log("err",e);
-					 });
-				 },
-				 computed: {
-					 contentListSorted() {
-						 console.log("contentListSorted");
-						 this.contentList.sort(function(a,b) { return parseInt(a.Index) - parseInt(b.Index) });
-						 return this.contentList;
-					 }
-				 },
-				 methods: {
-					 add() {
-						 console.log("add",this.selected);
-						 var idx=this.contentList[this.contentList.length-1].Index+1;
-						 this.contentList.push({ContentTitle:this.selected,ContentId:this.selected,Position:"a",Index:idx});
-					 },
-					 save () {
-						 var self = this;			 
-						 post_json("/aviva/page/json/{{.current.Id}}",this.contentList,function (r) {
-							 self.contentList=r.filter(c => c.Position=='a');
-							 self.last_index=self.contentList.length-1;
-						 }, function (e) {
-							 console.log("err",e);
-						 });
-					 },
-					 move_up (e) {
-						 var id=parseInt(e.target.id);
-						 var t=this.contentList[id].Index;
-						 this.contentList[id].Index=this.contentList[id-1].Index;
-						 this.contentList[id-1].Index=t;
-					 },
-					 move_down (e) {
-						 var id=parseInt(e.target.id);
-						 var t=this.contentList[id].Index;
-						 this.contentList[id].Index=this.contentList[id+1].Index;
-						 this.contentList[id+1].Index=t;
-					 },
-					 
-					 /*		 tab_click (e) {
-						var show_id=e.target.id;
-						this.contentList.forEach(function (item) {
-						if (item.id==show_id) {
-						item.visible=true;
-						} else {
-						item.visible=false;
-						}
-						});
-						
-						}*/
-				 }
-			 });
-			</script>
-
-
-			
-			
 		</div>
-		<div class="column">
-			<h2>Content position B</h2>
-
-			<ul>
-		  {{range .current.ContentForPosition "b"}}
-	    <li>{{.Content.Title}}</li>
-	{{end}}
-	</ul>
-	
-  </div>
-  </div>
-
-
-	
-  </div>
 
   
 </div>

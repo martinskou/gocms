@@ -28,7 +28,7 @@
            <a class="navbar-link" onclick="document.getElementById('page_filter').focus();">Pages</a>
 
            <div class="navbar-dropdown">
-             <a href="/aviva/pages" class="navbar-item">Overview ({{len .cms.Root.Children}})</a>
+             <a href="/aviva" class="navbar-item">Overview ({{len .cms.Root.Children}})</a>
 
 			 <div  id="pageselector">
 	           <div class="navbar-item">
@@ -80,6 +80,12 @@
            </div>
          </div>
 
+       </div>
+
+       <div class="navbar-end">
+         <div class="navbar-item">
+         </div>
+
    		 <a href="/aviva/logout" class="navbar-item">
 		   Logout {{.user}}
 		 </a>
@@ -88,12 +94,7 @@
 		   Login
 		 </a>
 		 {{ end }}
-
-       </div>
-
-       <div class="navbar-end">
-         <div class="navbar-item">
-         </div>
+		 
        </div>
      </div>
    </nav>

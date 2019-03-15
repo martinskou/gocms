@@ -10557,6 +10557,10 @@ label.panel-block:hover {
  font-family: 'Source Sans Pro';
 }
 
+body {
+	background-color:#fbfbfb;
+}
+
 .hello {
   color: red;
 }
@@ -10570,21 +10574,28 @@ label.panel-block:hover {
 }
 input:focus,
 select:focus,
+.select select:focus,
 textarea:focus,
 button:focus {
+	box-shadow: none;
     outline: none;
 }
 
 .input,
+.select,
 .textarea {
 	box-shadow: none;
 }
+
 .input:active,
+.select:active,
+.select select:active,
 .textarea:active {
 	box-shadow: none;
 	border-color:#777;
 }
 .input:focus,
+.select:active,
 .textarea:focus {
 	box-shadow: none;
 	border-color:#777;

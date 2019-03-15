@@ -11,9 +11,11 @@
 
 
 <div class="columns is-fullheight">
+  <!--
   <div id="sidebar" class="column is-2 is-sidebar-menu is-hidden-mobile">
   </div>
-
+  -->
+  
   <div class="column is-main-content">
 
 	<br><br><br>
@@ -27,7 +29,7 @@
 		  <div class="field">
 			<label class="label">E-mail</label>
 			<div class="control">
-			  <input class="input" type="email" placeholder="E-mail" v-model="email">
+			  <input class="input" type="email" :autofocus="'autofocus'" placeholder="E-mail" v-model="email">
 			  <input type="checkbox" v-model="remember" true-value="yes" false-value="no"> Husk email.
 			</div>
 			<p class="help">Den e-mail adresse du er oprettet med i systemet.</p>

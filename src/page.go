@@ -3,10 +3,6 @@ package main
 import (
     "fmt"
     "strings"
-    "math/rand"
-    "time"
-	"errors"
-	"io/ioutil"
 	"encoding/json"
 )
 
@@ -22,17 +18,6 @@ type Config struct {
 	Port       string
 	Debug      bool
 }
-
-
-/*
-
-Page uses specific html template to render. A template contains fields which pulls in content and renders it.
-
-Content : A piece of content. Can ba an article with attached picture, or just a link or image.
-
-ContentLink : Informaion linking a piece of content to a position on a page.
-
-*/
 
 type Content struct {
 	// Content
@@ -75,7 +60,6 @@ type ContentLink struct {
 }
 
 
-
 type ContentLinkJson struct {
 	ContentId    string
 	ContentTitle string
@@ -83,19 +67,65 @@ type ContentLinkJson struct {
 	Position     string
 	Visible      bool
 }
-/*
+
 func (c *ContentLink) MarshalJSON() ([]byte, error) {
-	c:=ContentLinkJson{
-		ContentId:  *c.Content.Id,
-		Index:    c.Index,
+	return json.Marshal(&struct {
+		Content string
+		Position string
+		Index int
+		Visible bool
+	}{
+		Content: c.Content.Id,
 		Position: c.Position,
+		Index: c.Index,
 		Visible: c.Visible,
-	}
-	return json.Marshal(c)
+	})
 }
-*/
 
 
+func (c Page) MarshalJSON() ([]byte, error) {
+	return json.Marshal(&struct {
+		Title        string
+		Description  string
+		Keywords     string
+		//Content  string
+		ContentLinks []ContentLink
+		// Meta
+		Name     string  // unique internal name
+		Id       string  // unique internal id (permanent)
+		Domain   string
+		Slug     string
+		Template string // template file to use
+		Class    string
+		Redirect string // takes precedence if defined
+		Index    int    // position in respect to other pages
+		Visible  bool   // visible in menu
+		MenuOnly bool   // visible in menu
+		// Hierarchy
+	//	Parent   *Page
+		Children []*Page
+	}{
+		Title:        c.Title,
+		Description:  c.Description,
+		Keywords:     c.Keywords,
+		//Content  string
+		ContentLinks: c.ContentLinks,
+		// Meta
+		Name:     c.Name,  // unique internal name
+		Id:       c.Id,  // unique internal id (permanent)
+		Domain:   c.Domain,
+		Slug:     c.Slug,
+		Template: c.Template, // template file to use
+		Class:    c.Class,
+		Redirect: c.Redirect, // takes precedence if defined
+		Index:    c.Index,    // position in respect to other pages
+		Visible:  c.Visible,   // visible in menu
+		MenuOnly: c.MenuOnly,   // visible in menu
+		// Hierarchy
+	//	Parent   *Page
+		Children: c.Children,
+	})
+}
 
 type Page struct {
 	// Content
@@ -120,6 +150,38 @@ type Page struct {
 	Children []*Page
 }
 
+type PageWrap struct {
+	Page     *Page
+	Level    int
+	Index    int
+	GlobalIndex int
+}
+
+func (c *CMS) MarshalJSON() ([]byte, error) {
+	return json.Marshal(&struct {
+		Config     Config
+		Path     string
+		Content  []*Content
+		Root     *Page
+	}{
+		Config:       c.Config,
+		Path:         c.Path,
+		Content:      c.Content,
+		Root:         c.Root,
+	})
+}
+
+
+type CMS struct {
+	Config   Config
+	Root     *Page
+	Content  []*Content
+	Path     string
+}
+
+
+
+
 func (p *Page) ContentLinkJsons() []ContentLinkJson {
 	cl := make([]ContentLinkJson,0)
 	for _, c := range p.ContentLinks {
@@ -134,7 +196,6 @@ func (p *Page) ContentLinkJsons() []ContentLinkJson {
 	}
 	return cl
 }
-
 
 
 // Return true if Page with argument id is a child or decendant
@@ -174,29 +235,6 @@ func (p *Page) AddChild(child *Page) {
 
 
 
-/*
-func (p *Page) MarshalJSON() ([]byte, error) {
-	return json.Marshal(&struct {
-		Title     string
-		Id        string
-		Domain    string
-		Slug      string
-		Template  string // template file to use
-		Class     string
-		Redirect  string // takes precedence if defined
-		
-	}{
-		Id:       p.Id,
-		Title:    p.Title,
-		Domain:    p.Domain,
-		Slug:       p.Slug,
-		Template:       p.Template,
-		Class:       p.Class,
-		Redirect:       p.Redirect,
-	})
-}
-*/
-
 func (p *Page) ContentForPosition(pos string) []ContentLink {
 	cl := make([]ContentLink,0)
 	for _, c := range p.ContentLinks {
@@ -209,19 +247,6 @@ func (p *Page) ContentForPosition(pos string) []ContentLink {
 
 
 
-type CMS struct {
-	Config   Config
-	Root     *Page
-	Content  []*Content
-	Path     string
-}
-
-type PageWrap struct {
-	Page     *Page
-	Level    int
-	Index    int
-	GlobalIndex int
-}
 
 func (page *Page) AppendPages(page_list *[]PageWrap,level int, index int, gindex *int) {
 	pw := PageWrap{
@@ -241,71 +266,6 @@ func (cms CMS) PageList() []PageWrap {
 	gi := 0
 	cms.Root.AppendPages(&page_list,0,0,&gi)
 	return page_list
-}
-
-
-
-
-func join(strs ...string) string {
-	var sb strings.Builder
-	for _, str := range strs {
-		sb.WriteString(str)
-	}
-	return sb.String()
-}
-
-func joinRunes(runes ...rune) string {
-	var sb strings.Builder
-	for _, r := range runes {
-		sb.WriteRune(r)
-	}
-	return sb.String()
-}
-
-func pseudo_uuid() (uuid string) {
-	b := make([]byte, 16)
-	_, err := rand.Read(b)
-	if err != nil {
-		fmt.Println("Error: ", err)
-		return
-	}
-	uuid = fmt.Sprintf("%X-%X-%X-%X", b[0:2], b[2:4], b[4:6], b[6:8])
-	return
-}
-
-
-var letters = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
-//var konsonanter = []rune("bcdfghjklmnprstvwxz")
-var konsonanter = []rune("bcdddffghhjkllmmnnnprrrsstttvwxz")
-//var vokaler = []rune("aeioqyuæøå")
-var vokaler = []rune("aaaeeeeeiiioooqyuuæøå")
-
-func randString(n int) string {
-    b := make([]rune, n)
-    for i := range b {
-        b[i] = letters[rand.Intn(len(letters))]
-    }
-    return string(b)
-}
-
-func randWord(n int) string {
-    b := make([]rune,0)
-    for i:=0; i<n; i++ {
-		b=append(b, konsonanter[rand.Intn(len(konsonanter))])
-		b=append(b, vokaler[rand.Intn(len(vokaler))])
-		if rand.Intn(3)==1 {
-			b=append(b, konsonanter[rand.Intn(len(konsonanter))])
-		}
-    }
-    return string(b)
-}
-
-func randSentence(n int) string {
-	b := make([]string, n)
-    for i := range b {
-        b[i] = randWord(rand.Intn(3)+1)
-    }
-    return strings.Join(b," ")
 }
 
 func (p Page) Print(index int, level int) {
@@ -380,152 +340,27 @@ func (c Content) HasChildren() bool {
 }
 
 
-func TestRnd() {
-    var m map[int]int
-    m = make(map[int]int,0)
-    for i := 0; i < 100000; i++ {
-        x:=rand.Intn(10)
-        //println(x)
-        m[x]+=1
-    }
-    for k := range m {
-        println(k,m[k])
-    }
-}
 
-func RandomContent(allow_children bool) Content {
-	t:=strings.Title(randWord(rand.Intn(3)+2))
-	var children []*Content
-	if allow_children {
-		children=RandomContents(rand.Intn(5),false)
-	}
-	c:=Content{Title: t,
-			   Name: t,
-			   Id: pseudo_uuid(),
-	           Teaser: randSentence(30),
-			   Content: randSentence(150),
-			   ImageUrl: "https://source.unsplash.com/random/640x480",
-			   ImageText: randSentence(10),
-			   Visible: true,
-			   Children: children,
-		   	   Type: "Article"}
-	return c
-}
-
-func RandomContents (items int, allow_children bool) []*Content {
-    var ap []*Content
-    for i := 0; i < items; i++ {
-		c:=RandomContent(allow_children)
-	    ap=append(ap,&c)
-    }
-    return ap
-}
-
-
-func RandomPages (max_pages int, parent *Page) []*Page {
-    //ap := make([]Page,0)
-    var ap []*Page
-	if max_pages>0 {
-	    pages := rand.Intn(max_pages)
-	    for i := 0; i < pages; i++ {
-	        t:=strings.Title(randWord(rand.Intn(2)+2))
-	        p:= Page{Title: t,
-	                 Name: t,
-				     Id: pseudo_uuid(),
-					 Slug: strings.ToLower(t),
-					 Visible: true,
-					 Template: "standard_page.html",
-					 ContentLinks: make([]ContentLink,0), // randSentence(150),
-					 Parent: parent} // &[]Page{}}
-			p.Children = RandomPages(max_pages-2,&p)
-	        ap=append(ap,&p)
-	    }
-	}
-    return ap //[]Page{ p }
-}
-
-func RandomPageHierarchy () *Page {
-    p := Page{Title: "Frontpage",
-		      Name: "Frontpage",
-		      Id: pseudo_uuid(),
-			  Slug: "",
-			  Template: "standard_page.html",
-			  ContentLinks: make([]ContentLink,0), //randSentence(50),
-			  Parent: nil}
-	p.Children = RandomPages(10,&p)
-    return &p
-}
-
-func FillPagesWithContent(cms *CMS) {
-	cms.Root.Apply(func(p *Page) {
-	//	fmt.Println("Adding content to",p.AbsSlug())
-	//	p.Title="DEMO!"
-		cll := len(cms.Content)
-		mx := rand.Intn(5)+3
-		id_a, id_b := 0, 0
-		var cp string
-		var idx int
-		for i:=0; i<mx; i++ {
-			c := cms.Content[rand.Intn(cll)]
-			if rand.Intn(2)==0 {
-				cp="b"
-				idx=id_a
-				id_a+=1
-			} else {
-				cp="a"
-				idx=id_b				
-				id_b+=1
-			}
-			cl := ContentLink{
-				Content:    c,    // &(*cms.Content)[0],
-				Position:   cp,   // name of position in template
-				Index:      idx,  // index in position
-				Visible:    true}
-			p.ContentLinks=append(p.ContentLinks,cl)
-		}
-
-/*		if (cms.Root.Children[0].Id==p.Id) {
-			fmt.Printf("RESULT 1 : %s %s %p\n",p.Id, p.Title, p)
-		}
-		if (cms.Root.Id==p.Id) {
-			fmt.Printf("RESULT A : %s %s %p\n",p.Id, p.Title, p)
-		}*/
+/*
+func (p *Page) MarshalJSON() ([]byte, error) {
+	return json.Marshal(&struct {
+		Title     string
+		Id        string
+		Domain    string
+		Slug      string
+		Template  string // template file to use
+		Class     string
+		Redirect  string // takes precedence if defined
+		
+	}{
+		Id:       p.Id,
+		Title:    p.Title,
+		Domain:    p.Domain,
+		Slug:       p.Slug,
+		Template:       p.Template,
+		Class:       p.Class,
+		Redirect:       p.Redirect,
 	})
-	//cms.Root.Title="DEMO!!!"
-//	fmt.Printf("%p \n", cms.Root)
-//	fmt.Printf("RESULT 2 : %s %s %p\n",cms.Root.Children[0].Id, cms.Root.Children[0].Title, &cms.Root.Children[0])
-//	fmt.Printf("RESULT B : %s %s %p\n",cms.Root.Id, cms.Root.Title, cms.Root)
-//	fmt.Printf("ROOT : %+v\n", cms.Root)
 }
+*/
 
-func RandomCMS () CMS {
-    cms := CMS{
-		Config: Config{Title: randString(10),
-			           Theme: "alfa"},
-		Root: RandomPageHierarchy(),
-		Content: RandomContents(100,true)}
-	FillPagesWithContent(&cms)
-    return cms
-}
-
-
-func LoadConfig(config_path string) (Config,error) {
-	var config Config
-
-	if Exists(config_path) {
-		dat, _ := ioutil.ReadFile(config_path)
-		err := json.Unmarshal(dat, &config)
-		if err != nil {
-			fmt.Println("error:", err)
-		} else {
-			return config, nil
-		}
-	} else {
-		fmt.Println("config.json file not found")
-	}
-	return config, errors.New("Config not loaded")
-}
-
-func init() {
-    rand.Seed(time.Now().UnixNano())
-}

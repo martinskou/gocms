@@ -23,6 +23,12 @@ Run server using go run:
 
 Build server:
 
+Using Make (from base path):
+
+> make build
+
+Manual:
+
 > go build .
 > cp gocms ../bin/
 > cd ..

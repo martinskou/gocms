@@ -104,6 +104,11 @@ func render_site_page(site_templates map[string]*template.Template, p *Page, cms
 	return buf.Bytes(), err
 }
 
+var (
+	version string
+    date string
+)
+
 func versionInfo(e *echo.Echo) {
 	colorer := color.New()
 	fmt.Println("")
@@ -112,7 +117,7 @@ func versionInfo(e *echo.Echo) {
 	fmt.Println(` /  /_\  \  \/ /  \  \/ /\__  \  `)
 	fmt.Println(`/    |    \   /|  |\   /  / __ \_`)
 	fmt.Println(`\____|__  /\_/ |__| \_/  (____  /`)
-	fmt.Println(`        \/                    \/ `,colorer.Red("v1.0.0"))
+	fmt.Println(`        \/                    \/ `,colorer.Red(version))
 	fmt.Println("High performance minimal CMS")
 	//fmt.Printf("%v\n", "♥" == "\u2665")
 	fmt.Println(colorer.Blue("https://aviva.dk"))
@@ -168,6 +173,15 @@ func RunServer(base_path string, config_path string) {
 	})
 
 
+
+	e.GET("/aviva/data/save", func(c echo.Context) error {
+		return ViewSave(&cms,c,cms_renderer);
+	})
+	e.GET("/aviva/data/load", func(c echo.Context) error {
+		return ViewLoad(&cms,c,cms_renderer);
+	})
+
+	
 	e.GET("/aviva/login", func(c echo.Context) error {
 		return ViewLogin(cms,c,cms_renderer);
 	})
@@ -198,6 +212,7 @@ func RunServer(base_path string, config_path string) {
 		return GetLogout(cms,c,cms_renderer)
 	})
 
+	register_extensions(e,cms,cms_renderer)
 
 	e.File("/favicon.ico", filepath.Join(base_path, "themes/alfa/assets/img/favicon.png"))
 

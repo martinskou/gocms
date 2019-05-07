@@ -11,6 +11,33 @@ import (
 )
 
 
+func ViewSave(cms *CMS, c echo.Context, renderer *TemplateRenderer) error {
+	log.WithFields(log.Fields{"path": c.Path()}).Info("ViewSave")
+	sess, _ := session.Get("session", c)
+	if sess.Values["email"]==nil {
+		return c.Redirect(http.StatusFound,"/aviva/login")
+	} else {
+		SaveCMS(cms)
+		sess.AddFlash("Data gemt")
+		sess.Save(c.Request(), c.Response())
+		return c.Redirect(http.StatusFound,"/aviva")
+	}
+}
+
+
+func ViewLoad(cms *CMS, c echo.Context, renderer *TemplateRenderer) error {
+	log.WithFields(log.Fields{"path": c.Path()}).Info("ViewSave")
+	sess, _ := session.Get("session", c)
+	if sess.Values["email"]==nil {
+		return c.Redirect(http.StatusFound,"/aviva/login")
+	} else {
+		LoadCMS(cms)
+		sess.AddFlash("Data gemt")
+		sess.Save(c.Request(), c.Response())
+		return c.Redirect(http.StatusFound,"/aviva")
+	}
+}
+
 
 func ViewDashboard(cms CMS, c echo.Context, renderer *TemplateRenderer) error {
 	log.WithFields(log.Fields{"path": c.Path()}).Info("ViewDashboard")

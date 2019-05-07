@@ -11,4 +11,7 @@
 # Output of the go coverage tool, specifically when used with LiteIDE
 *.out
 
+# Saved data from CMS
+*.json
+
 dependencies/node_modules

@@ -199,7 +199,7 @@ func FillPagesWithContent(cms *CMS) {
 
 
 
-func Save(cms *CMS) {
+func SaveCMS(cms *CMS) {
 	bytes, err := json.MarshalIndent(cms,"","    ")
     if err != nil {
         log.Fatal(err)
@@ -211,6 +211,18 @@ func Save(cms *CMS) {
     }	
 }
 
+func LoadCMS(cms *CMS) {
+	bytes, err := ioutil.ReadFile("output.json")
+    if err != nil {
+        log.Fatal(err)
+    }
+	err = json.Unmarshal(bytes, cms)
+	if err != nil {
+        log.Fatal("Error parsing JSON", err.Error())
+    }
+}
+
+
 func RandomCMS () CMS {
     cms := CMS{
 		Config: Config{Title: randString(10),
@@ -219,7 +231,7 @@ func RandomCMS () CMS {
 		Content: RandomContents(100,true)}
 	FillPagesWithContent(&cms)
 
-	Save(&cms)
+	//SaveCMS(&cms)
     return cms
 }
 
